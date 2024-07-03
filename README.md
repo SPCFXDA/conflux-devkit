@@ -42,6 +42,13 @@ export RUST_BACKTRACE=1
 /opt/conflux/conflux --config /opt/conflux/develop.toml
 ```
 
+Once the `independent chain` is running you can open another terminal and transfer funds from the genesis Core addresses to their ESpace addresses with the following command:
+```sh
+genesis_espace
+```
+
+this command execute the [genesis_espace](.devcontainer/conflux/utils/genesis_espace.js)  script that read the genesis private keys and use them to call the [crossSpaceCall](https://doc.confluxnetwork.org/docs/core/core-space-basics/internal-contracts/crossSpaceCall) internal contract
+
 ## Getting Started
 ### Prerequisites
 

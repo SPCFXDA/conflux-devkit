@@ -10,6 +10,7 @@
   "description": "",
   "dependencies": {
     "@iarna/toml": "^2.2.5",
+    "ethereumjs-util": "^7.1.5",
     "js-conflux-sdk": "^2.4.5",
     "toml": "^3.0.0"
   }

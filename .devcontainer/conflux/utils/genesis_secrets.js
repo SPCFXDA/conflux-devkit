@@ -13,11 +13,6 @@ function genesisSecrets() {
       const randomAccount = Account.random(undefined, config.chain_id);
       secrets.push(randomAccount.privateKey.replace('0x', ''));
     }
-    // for (let i = 0; i < 5; i++) {
-    //   const randomAccount = Account.random(undefined, config.evm_chain_id);
-    //   secrets.push(randomAccount.privateKey.replace('0x', ''));
-    // }
-    secrets.push("")
 
     fs.appendFile(config.genesis_secrets, secrets.join('\n'), (err) => {
       if (err) {

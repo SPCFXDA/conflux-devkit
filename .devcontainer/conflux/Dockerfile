@@ -24,8 +24,11 @@ RUN wget ${NODE_VERSION_URL} -O /tmp/conflux_node.zip &&\
 COPY develop.toml ${CONFIG_PATH}
 ADD utils ${CONFLUX_NODE_ROOT}/utils
 
-RUN echo '#!/bin/bash\nulimit -n 10000\nexport RUST_BACKTRACE=1\n'${CONFLUX_NODE_ROOT}'/conflux --config '${CONFIG_PATH} > /usr/bin/start_dev_node && \
+RUN echo '#!/bin/bash\nulimit -n 10000\nexport RUST_BACKTRACE=1\n'${CONFLUX_NODE_ROOT}'/conflux --config '${CONFIG_PATH}' 2> '${CONFLUX_NODE_ROOT}'/stderr.txt' > /usr/bin/start_dev_node && \
     chmod +x /usr/bin/start_dev_node
+
+RUN echo '#!/bin/bash\nnode '${CONFLUX_NODE_ROOT}'/utils/genesis_espace.js' > /usr/bin/genesis_espace && \
+    chmod +x /usr/bin/genesis_espace
 
 RUN sed -i 's|"log/|"'${CONFLUX_NODE_ROOT}'/log/|g' ${CONFLUX_NODE_ROOT}/log.yaml
 
@@ -34,14 +37,14 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # Enable these row to enable the creation of a custom user, remember to set the correct USERNAME, USER_UID and USER_GID
-#  RUN groupadd --gid $USER_GID $USERNAME \
-#      && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME
+# RUN groupadd --gid $USER_GID $USERNAME \
+#     && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME
 
 # Configuring passwordless sudo
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
-RUN chown -R $USERNAME:$USERNAME ${CONFLUX_NODE_ROOT}
+RUN chown -R ${USER_UID}:${USER_GID} ${CONFLUX_NODE_ROOT}
 
 USER $USERNAME
 
