@@ -1,0 +1,16 @@
+{
+  "name": "scripts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "js-conflux-sdk": "^2.4.5",
+    "toml": "^3.0.0"
+  }
+}
