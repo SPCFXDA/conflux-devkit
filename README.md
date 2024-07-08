@@ -8,7 +8,7 @@ This repository is a minimal setup and will be used for the creation of more tas
 
 ## Features
 
-- Pre-configured development environment for Conflux Core Space and ESpace.
+- Pre-configured development environment for Conflux Core, ESpace, PoS.
 - Simplified setup with all dependencies installed.
 - Consistent and isolated development environment.
 - Integrated OpenVSCode server for a web-based development experience.
@@ -16,30 +16,30 @@ This repository is a minimal setup and will be used for the creation of more tas
 
 ## What is available in this dev environment
 
-Using the following [Dockerfile](.devcontainer/conflux/Dockerfile) and [develop.toml](.devcontainer/conflux/develop.toml), the Docker instance will create an [independent chain](https://doc.confluxnetwork.org/docs/general/run-a-node/advanced-topics/running-independent-chain).
+Using the following [Dockerfile](.devcontainer/conflux/Dockerfile) and [develop.toml.template](.devcontainer/conflux/templates/develop.toml.template), the Docker instance will create an [independent chain](https://doc.confluxnetwork.org/docs/general/run-a-node/advanced-topics/running-independent-chain).
 The `independent chain` will be reachable with the following RPC that can be added to [Fluent](https://fluentwallet.com/) or [Metamask](https://metamask.io/) wallet:
 
-Core:  http://localhost:12537
+Core:  http://localhost:12537 (or codepace host instead of localhost)
 
-Espace: http://localhost:8545
+Espace: http://localhost:8545 (or codepace host instead of localhost)
 
-During the build of the image, the node binary will be installed in the `/opt/conflux/` folder and some genesis account private keys will be created using the following script: [genesis_secrets.js](.devcontainer/conflux/utils/genesis_secrets.js)
+During the build of the image, the node binary will be installed in the system, and all revelant configuration and data dirs will be pointed to `/opt/conflux/` folder. 5 genesis account private keys will be created in the same folder using the following script: [genesis_secrets.js](.devcontainer/conflux/utils/genesis_secrets.js)
 
 The genesis account can be found in `/opt/conflux/genesis_secrets.txt`. You can import these accounts into your wallet, or you can add your development private key to this file before starting the Conflux node.
 
 To start the `independent chain`, open the terminal in the VS Code interface (this is the same for the locally installed VS Code or the web-based one in Codespaces or OpenVSCode-Server) and use this command:
 
 ```sh
-start_dev_node
+dev_node
 ```
 
-`start_dev_node` is a shell script located in `/usr/bin/start_dev_node` with the following content:
+`dev_node` is a shell script located in `/usr/bin/dev_node` with the following content:
 
 ```sh
 #!/bin/bash
 ulimit -n 10000
 export RUST_BACKTRACE=1
-/opt/conflux/conflux --config /opt/conflux/develop.toml
+conflux --config /opt/conflux/develop.toml
 ```
 
 Once the `independent chain` is running you can open another terminal and transfer funds from the genesis Core addresses to their ESpace addresses with the following command:
