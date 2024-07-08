@@ -4,11 +4,11 @@
 
 Conflux DevKit provides an easy-to-setup development environment for the Conflux blockchain spaces (Core Space and ESpace EVM). It leverages Docker to create a devcontainer with all necessary tools, dependencies, and configurations pre-installed, ensuring a seamless and consistent development experience.
 
-This repository is a minimal setup and will be used for the creation of more task-specific repositories like a Hardhat-conflux repository or a frontend template repository.
+This repository provides a minimal setup and serves as a foundation for creating more task-specific repositories, such as a Hardhat repository or a frontend template repository.
 
 ## Features
 
-- Pre-configured development environment for Conflux Core, ESpace, PoS.
+- Pre-configured development environment for Conflux Core, ESpace, and PoS.
 - Simplified setup with all dependencies installed.
 - Consistent and isolated development environment.
 - Integrated OpenVSCode server for a web-based development experience.
@@ -19,13 +19,13 @@ This repository is a minimal setup and will be used for the creation of more tas
 Using the following [Dockerfile](.devcontainer/conflux/Dockerfile) and [develop.toml.template](.devcontainer/conflux/templates/develop.toml.template), the Docker instance will create an [independent chain](https://doc.confluxnetwork.org/docs/general/run-a-node/advanced-topics/running-independent-chain).
 The `independent chain` will be reachable with the following RPC that can be added to [Fluent](https://fluentwallet.com/) or [Metamask](https://metamask.io/) wallet:
 
-Core:  http://localhost:12537 (or codepace host instead of localhost)
+Core:  http://localhost:12537 (or Codespace host instead of localhost)
 
-Espace: http://localhost:8545 (or codepace host instead of localhost)
+Espace: http://localhost:8545 (or Codespace host instead of localhost)
 
-During the build of the image, the node binary will be installed in the system, and all revelant configuration and data dirs will be pointed to `/opt/conflux/` folder. 5 genesis account private keys will be created in the same folder using the following script: [genesis_secrets.js](.devcontainer/conflux/utils/genesis_secrets.js)
+During the image build process (which compiles the binary and may take some time, especially in Codespaces with default settings), the node binary will be installed in the system, and all relevant configuration and data directories will be located in the `/opt/conflux/` folder. Five genesis account private keys will be created in the same folder using the following script: [genesis_secrets.js](.devcontainer/conflux/utils/genesis_secrets.js).
 
-The genesis account can be found in `/opt/conflux/genesis_secrets.txt`. You can import these accounts into your wallet, or you can add your development private key to this file before starting the Conflux node.
+The genesis account details can be found in `/opt/conflux/genesis_secrets.txt`. You can import these accounts into your wallet, or you can add your development private key to this file before starting the Conflux node.
 
 To start the `independent chain`, open the terminal in the VS Code interface (this is the same for the locally installed VS Code or the web-based one in Codespaces or OpenVSCode-Server) and use this command:
 
@@ -42,12 +42,13 @@ export RUST_BACKTRACE=1
 conflux --config /opt/conflux/develop.toml
 ```
 
-Once the `independent chain` is running you can open another terminal and transfer funds from the genesis Core addresses to their ESpace addresses with the following command:
+Once the `independent chain` is running, you can open another terminal and transfer funds from the genesis Core addresses to their ESpace addresses with the following command:
+
 ```sh
 genesis_espace
 ```
 
-this command execute the [genesis_espace](.devcontainer/conflux/utils/genesis_espace.js)  script that read the genesis private keys and use them to call the [crossSpaceCall](https://doc.confluxnetwork.org/docs/core/core-space-basics/internal-contracts/crossSpaceCall) internal contract
+This command executes the [genesis_espace](.devcontainer/conflux/utils/genesis_espace.js) script that reads the genesis private keys and uses them to call the [crossSpaceCall](https://doc.confluxnetwork.org/docs/core/core-space-basics/internal-contracts/crossSpaceCall) internal contract.
 
 ## Getting Started
 ### Prerequisites
@@ -60,15 +61,15 @@ You can open this repository in Codespaces using the Codespaces tab under the `C
 
 ![alt text](README/codespace_tab.png)
 
-After a few seconds, the environment will be ready to use.
+After a few minutes, depending on the configured machine, the environment will be ready to use.
 
 ### Run in VS Code devcontainer
 
-After you open the repository folder with VS Code, the following popup will appear in the bottom right corner:
+After opening the repository folder with VS Code, a popup will appear in the bottom right corner:
 
 ![alt text](README/vscode.png)
 
-Click on the `Reopen in Container` button, and after the build and download of the layers are completed, your instance of VS Code will be inside the devcontainer. You can confirm this from the status in the bottom left corner that should look like this:
+Click on the `Reopen in Container` button. After the build and download of the layers are completed, your VS Code instance will be inside the devcontainer. You can confirm this from the status in the bottom left corner that should look like this:
 
 ![alt text](README/vscode_devcontainer.png)
 
@@ -81,7 +82,7 @@ Click on the `Reopen in Container` button, and after the build and download of t
     cd conflux-devkit
     ```
 
-2. To start the container with the Conflux node and OpenVSCode server, you can use the `start_server.sh` in the root of the repository:
+2. To start the container with the Conflux node and OpenVSCode server, use the `start_server.sh` script located in the root of the repository:
     ```sh
     ./start_server.sh
     ```
@@ -117,14 +118,16 @@ Open your browser and navigate to `http://localhost:5000` to access the OpenVSCo
 
 ### Custom User
 
-To enable the creation of a custom user, uncomment the following lines in the [Dockerfile](.devcontainer/conflux/Dockerfile):
+To enable the creation of a custom user, uncomment the following lines in the [devcontainer.json](.devcontainer/devcontainer.json):
 
-```Dockerfile
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME
+```json
+			// "USERNAME": "conflux",
+			// "USER_UID": "1001"
+			// "USER_GID": "1001"
 ```
 
-Ensure to set the correct `USERNAME`, `USER_UID`, and `USER_GID` values.
+Ensure you set the correct `USERNAME`, `USER_UID`, and `USER_GID` values for your system.
+The default user is `node`, with `1000:1000` as UID:GID and already exist on the base `node:20-slim` image.
 
 ### Passwordless Sudo
 
@@ -141,6 +144,8 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Acknowledgements
 
 - [Conflux](https://confluxnetwork.org/)
+- [Conflux-Rust](https://github.com/Conflux-Chain/conflux-rust/releases)
+- [Conflux-Docker](https://github.com/Conflux-Chain/conflux-docker/tree/master)
 - [Fluent](https://fluentwallet.com/)
 - [OpenVSCode Server](https://github.com/gitpod-io/openvscode-server)
 

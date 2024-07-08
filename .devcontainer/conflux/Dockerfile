@@ -63,8 +63,8 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # Enable these row to enable the creation of a custom user, remember to set the correct USERNAME, USER_UID and USER_GID
-# RUN groupadd --gid $USER_GID $USERNAME \
-#     && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME
+RUN id -u $USERNAME >/dev/null 2>&1 || (groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME)
 
 # Configuring passwordless sudo
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
