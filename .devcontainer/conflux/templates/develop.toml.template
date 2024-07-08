@@ -45,11 +45,19 @@ mode = "dev"
 # If it's not set, blocks will only be generated after receiving a transaction.
 # Otherwise, blocks are automatically generated every ``dev_block_interval_ms'' ms.
 #
-dev_block_interval_ms = 1000
-genesis_secrets = '/opt/conflux/genesis_secrets.txt'
-pos_private_key_path='/opt/conflux/pos_config/pos_key'
+dev_block_interval_ms = 250
+genesis_secrets = '$CONFLUX_NODE_ROOT/genesis_secrets.txt'
 
+# ----------------- Pos Configuration -----------------
 
+# PoS config file path
+pos_config_path='$CONFLUX_NODE_ROOT/pos_config/pos_config.yaml'
+# PoS initial nodes file path
+pos_initial_nodes_path='$CONFLUX_NODE_ROOT/pos_config/initial_nodes.json'
+# PoS account private key file path
+pos_private_key_path='$CONFLUX_NODE_ROOT/pos_config/pos_key'
+# PoS account private key encryption password 
+dev_pos_private_key_encryption_password = "CFXV20"
 
 # ----------------- Mining Configuration -----------------
 
@@ -91,7 +99,7 @@ pos_private_key_path='/opt/conflux/pos_config/pos_key'
 # `log_conf` the path of the log4rs configuration file. The configuration in the file will overwrite the value set by `log_level`.
 # By default, the value is not set.
 #
-log_conf="/opt/conflux/log.yaml"
+log_conf="$CONFLUX_NODE_ROOT/log.yaml"
 
 # `log_file` is the path of the log file"
 # If not set, the log will only be printed to stdout, and not persisted to files.
@@ -162,8 +170,10 @@ jsonrpc_ws_eth_port=8546
 # Possible names are: all, safe, cfx, pos, debug, pubsub, test, trace, txpool.
 # `safe` only includes `cfx` and `pubsub`, `txpool`.
 #
-# public_rpc_apis = "safe"
-public_evm_rpc_apis = "evm"
+public_rpc_apis = "all"
+public_evm_rpc_apis = "evm,ethdebug"
+# Specify the filter life time in seconds, only this option is set, the filter related RPC methods will be available.
+poll_lifetime_in_seconds = 60
 
 # --------------- Performance-related Network Parameters ----------------------
 
@@ -330,7 +340,7 @@ public_evm_rpc_apis = "evm"
 # By default, it is stored under the directory configured with `conflux_data_dir` with the directory name `net_config`.
 # If set, the directory path will not be related to `conflux_data_dir` anymore.
 #
-# netconf_dir="/opt/conflux/blockchain_data/net_config"
+# netconf_dir="$CONFLUX_NODE_ROOT/blockchain_data/net_config"
 
 # `net_key` is the 256-bit private key to generate a unique node id for this node.
 # The value is a 64-digit hex string.
@@ -372,14 +382,14 @@ public_evm_rpc_apis = "evm"
 # Whether to persist block number indices.
 # This only needs to be enabled if you want to use RPCs that take block numbers as an input.
 #
-# persist_block_number_index = true
+persist_block_number_index = true
 
 # ---------------- Transaction Cache Parameters -----------------
 
 # Whether to persist transaction indices.
 # This only needs to be enabled if you want to reliably answer transaction-related RPCs.
 #
-# persist_tx_index = false
+persist_tx_index = true
 
 # Time to keep transactions in in-memory transaction cache.
 #
@@ -423,14 +433,14 @@ public_evm_rpc_apis = "evm"
 
 # The root directory of all data (block data, state data, and node database).
 #
-conflux_data_dir = "/opt/conflux/blockchain_data"
+conflux_data_dir = "$CONFLUX_NODE_ROOT/blockchain_data"
 
 # The directory to store block-related data.
 #
 # By default, it is stored under the directory configured with `conflux_data_dir` with the directory name `blockchain_db`.
 # If set, the directory path will not be related to `conflux_data_dir` anymore.
 #
-# block_db_dir = "/opt/conflux/blockchain_data/blockchain_db"
+# block_db_dir = "$CONFLUX_NODE_ROOT/blockchain_data/blockchain_db"
 
 # Maximum size of cached ledger data (block, receipts, e.t.c.)
 # The unit is MB.
@@ -446,7 +456,7 @@ conflux_data_dir = "/opt/conflux/blockchain_data"
 # Only applies if `block_db_type = "rocksdb"`.
 # If not set, compaction configuration will be set automatically by rocksdb.
 #
-# rocksdb_compaction_profile = "/opt/conflux/compact_file.conf"
+# rocksdb_compaction_profile = "$CONFLUX_NODE_ROOT/compact_file.conf"
 
 # State storage parameters.
 # Refer to the documentation for details.
@@ -507,7 +517,7 @@ conflux_data_dir = "/opt/conflux/blockchain_data"
 
 # Whether to trace EVM execution and records the result in database.
 #
-# executive_trace = false
+executive_trace = true
 
 
 # -------------------- Others -------------------
@@ -554,13 +564,40 @@ get_logs_filter_max_limit = 5000
 # 1 for testnet
 # 1029 for Mainnet (Hydra)
 #
-chain_id = 2029
+chain_id = $CHAIN_ID
 
 # The EVM chain ID of Conflux Network (EVM space)
 # 1030 for Mainnet (Hydra)
 #
-evm_chain_id = 2030
-hydra_transition_number = 2
-hydra_transition_height = 1
-cip43_init_end_number = 92751800
-pos_reference_enable_height = 37400000
+evm_chain_id = $EVM_CHAIN_ID
+
+node_table_promotion_timeout_s = 9600
+
+# cips enable configuration
+
+# v2.0 cips: pos + espace
+hydra_transition_number = 5
+hydra_transition_height = 5
+cip43_init_end_number = 5
+pos_reference_enable_height = 5
+
+# v2.1
+dao_vote_transition_number = 6
+dao_vote_transition_height = 6
+cip78_patch_transition_number = 6
+cip90_transition_height = 6
+cip90_transition_number = 6
+cip105_transition_number = 6
+sigma_fix_transition_number = 6
+
+# v2.3
+cip107_transition_number = 7
+cip112_transition_height = 7
+cip118_transition_number = 7
+cip119_transition_number = 7
+
+# v2.4 cips: 1559, 137 and others
+cip1559_transition_height = 10
+cancun_opcodes_transition_number = 10
+next_hardfork_transition_number=10  # cip131, cip132, cip133b, cip137, cip144, cip145
+next_hardfork_transition_height=10  # cip130, cip133

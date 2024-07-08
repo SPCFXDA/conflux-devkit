@@ -1,44 +1,70 @@
-FROM node:20-slim AS devkit
-RUN apt-get update && apt-get install -y --no-install-recommends \ 
-        git \
-        sudo \
-        wget \
-        libatomic1 \
-        ca-certificates \
-        unzip \
+FROM rust:1.77.2-slim AS builder
+ARG CONFLUX_VERSION="v2.4.0"
+
+RUN apt-get update && apt-get install -y \
+    git \
+    clang \
+    libsqlite3-dev \
+    pkg-config \
+    libssl-dev \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /home/
+WORKDIR /work
 
-ARG NODE_VERSION="2.3.5"
-ARG NODE_VERSION_URL="https://github.com/Conflux-Chain/conflux-rust/releases/download/v"${NODE_VERSION}"/conflux_linux_glibc2.27_x64_v"${NODE_VERSION}".zip"
+RUN git clone -b ${CONFLUX_VERSION} --single-branch --depth 1 https://github.com/Conflux-Chain/conflux-rust.git conflux 
+
+WORKDIR /work/conflux
+
+RUN export CC=clang && export CXX=clang++ && cargo build --release
+
+FROM node:20-slim AS devkit
+
 ARG CONFLUX_NODE_ROOT="/opt/conflux"
 ARG CONFIG_PATH=${CONFLUX_NODE_ROOT}"/develop.toml"
 
-RUN echo ${NODE_VERSION_URL}
-RUN wget ${NODE_VERSION_URL} -O /tmp/conflux_node.zip &&\
-    unzip /tmp/conflux_node.zip -d /opt &&\
-    rm /tmp/conflux_node.zip &&\
-    mv /opt/run ${CONFLUX_NODE_ROOT}
-    
-COPY develop.toml ${CONFIG_PATH}
-ADD utils ${CONFLUX_NODE_ROOT}/utils
+RUN apt-get update && apt-get install -y --no-install-recommends \ 
+        git \
+        sudo \
+        gettext-base \
+        ca-certificates \ 
+    && rm -rf /var/lib/apt/lists/*
 
-RUN echo '#!/bin/bash\nulimit -n 10000\nexport RUST_BACKTRACE=1\n'${CONFLUX_NODE_ROOT}'/conflux --config '${CONFIG_PATH}' 2> '${CONFLUX_NODE_ROOT}'/stderr.txt' > /usr/bin/start_dev_node && \
-    chmod +x /usr/bin/start_dev_node
+COPY --from=builder /work/conflux/target/release/conflux /bin/conflux
+COPY --from=builder /work/conflux/target/release/cfxkey /bin/cfxkey
+COPY --from=builder /work/conflux/target/release/pos-genesis-tool  /bin/pos-genesis-tool
+COPY --from=builder /work/conflux/target/release/cfx-gen-dot /bin/cfx-gen-dot
+COPY --from=builder /work/conflux/target/release/cfxstore /bin/cfxstore
+
+RUN mkdir ${CONFLUX_NODE_ROOT} ${CONFLUX_NODE_ROOT}/log ${CONFLUX_NODE_ROOT}/pos_config
+
+ADD utils ${CONFLUX_NODE_ROOT}/utils
+ADD templates /tmp/templates
+
+ENV CHAIN_ID=2029
+ENV EVM_CHAIN_ID=2030
+ENV CONFLUX_NODE_ROOT=${CONFLUX_NODE_ROOT}
+ENV CONFIG_PATH=${CONFIG_PATH}
+
+RUN cat /tmp/templates/log.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/log.yaml
+RUN cat /tmp/templates/develop.toml.template | envsubst > ${CONFIG_PATH}
+
+RUN (cd ${CONFLUX_NODE_ROOT}/pos_config && pos-genesis-tool random --initial-seed=0000000000000000000000000000000000000000000000000000000000000000  --num-validator=1 --num-genesis-validator=1 --chain-id=${CHAIN_ID})
+
+RUN export WAYPOINT=$(cat ${CONFLUX_NODE_ROOT}/pos_config/waypoint_config) && cat /tmp/templates/pos_config.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/pos_config/pos_config.yaml
+
+RUN cat /tmp/templates/dev_node.sh.template | envsubst > /usr/bin/dev_node && chmod +x /usr/bin/dev_node 
 
 RUN echo '#!/bin/bash\nnode '${CONFLUX_NODE_ROOT}'/utils/genesis_espace.js' > /usr/bin/genesis_espace && \
     chmod +x /usr/bin/genesis_espace
-
-RUN sed -i 's|"log/|"'${CONFLUX_NODE_ROOT}'/log/|g' ${CONFLUX_NODE_ROOT}/log.yaml
 
 ARG USERNAME=node
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # Enable these row to enable the creation of a custom user, remember to set the correct USERNAME, USER_UID and USER_GID
-# RUN groupadd --gid $USER_GID $USERNAME \
-#     && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME
+RUN id -u $USERNAME >/dev/null 2>&1 || (groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME)
 
 # Configuring passwordless sudo
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
@@ -54,6 +80,7 @@ WORKDIR /workspaces/
 
 EXPOSE 3000 12535 12537 8545 8546
 
+
 FROM devkit AS openvscode
 
 ARG SERVER_VERSION="1.90.0"
@@ -62,6 +89,12 @@ ARG SERVER_VERSION_URL="https://github.com/gitpod-io/openvscode-server/releases/
 ARG OPENVSCODE_SERVER_ROOT="/opt/openvscode-server"
 
 USER root
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    libatomic1 \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN wget ${SERVER_VERSION_URL} -O /tmp/code-server.tar.gz &&\
     tar -xzf /tmp/code-server.tar.gz -C /opt &&\
     rm /tmp/code-server.tar.gz &&\

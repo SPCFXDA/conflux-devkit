@@ -3,10 +3,15 @@
 {
 	"name": "Conflux DevKit",
 	"build": {
-		// Sets the run context to one level up instead of the .devcontainer folder.
 		"context": "conflux",
-		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
 		"dockerfile": "conflux/Dockerfile",
+		"args": {
+			"CONFLUX_VERSION": "v2.4.0",
+			// "CONFLUX_NODE_ROOT": "/opt/conflux",
+			// "USERNAME": "conflux",
+			// "USER_UID": "1001"
+			// "USER_GID": "1001"
+		},	  
 		"target": "devkit" 
 	},
 
