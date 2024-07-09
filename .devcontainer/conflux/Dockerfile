@@ -20,30 +20,28 @@ COPY --from=release /bin/cfxstore /bin/cfxstore
 RUN mkdir ${CONFLUX_NODE_ROOT} ${CONFLUX_NODE_ROOT}/log ${CONFLUX_NODE_ROOT}/pos_config
 
 ADD utils ${CONFLUX_NODE_ROOT}/utils
-ADD templates /tmp/templates
+ADD templates /tmp/
 
 ENV CHAIN_ID=2029
 ENV EVM_CHAIN_ID=2030
 ENV CONFLUX_NODE_ROOT=${CONFLUX_NODE_ROOT}
 ENV CONFIG_PATH=${CONFIG_PATH}
 
-RUN cat /tmp/templates/log.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/log.yaml
-RUN cat /tmp/templates/develop.toml.template | envsubst > ${CONFIG_PATH}
+RUN cat /tmp/log.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/log.yaml
+RUN cat /tmp/develop.toml.template | envsubst > ${CONFIG_PATH}
 
 RUN (cd ${CONFLUX_NODE_ROOT}/pos_config && pos-genesis-tool random --initial-seed=0000000000000000000000000000000000000000000000000000000000000000  --num-validator=1 --num-genesis-validator=1 --chain-id=${CHAIN_ID})
+RUN export WAYPOINT=$(cat ${CONFLUX_NODE_ROOT}/pos_config/waypoint_config) && cat /tmp/pos_config.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/pos_config/pos_config.yaml
 
-RUN export WAYPOINT=$(cat ${CONFLUX_NODE_ROOT}/pos_config/waypoint_config) && cat /tmp/templates/pos_config.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/pos_config/pos_config.yaml
-
-RUN cat /tmp/templates/dev_node.sh.template | envsubst > /usr/bin/dev_node && chmod +x /usr/bin/dev_node 
-
-RUN echo '#!/bin/bash\nnode '${CONFLUX_NODE_ROOT}'/utils/genesis_espace.js' > /usr/bin/genesis_espace && \
-    chmod +x /usr/bin/genesis_espace
+RUN cat /tmp/dev_node.sh.template | envsubst > /usr/bin/dev_node && chmod +x /usr/bin/dev_node 
+RUN cat /tmp/genesis_espace.sh.template | envsubst > /usr/bin/genesis_espace && chmod +x /usr/bin/genesis_espace
+RUN cat /tmp/faucet.sh.template | envsubst > /usr/bin/faucet && chmod +x /usr/bin/faucet
 
 ARG USERNAME=node
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
-# Enable these row to enable the creation of a custom user, remember to set the correct USERNAME, USER_UID and USER_GID
+# Create new user is $USERNAME don't exist
 RUN id -u $USERNAME >/dev/null 2>&1 || (groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME)
 
@@ -55,7 +53,7 @@ RUN chown -R ${USER_UID}:${USER_GID} ${CONFLUX_NODE_ROOT}
 
 USER $USERNAME
 
-RUN (cd ${CONFLUX_NODE_ROOT}/utils && npm i && CONFIG_PATH=${CONFIG_PATH} node genesis_secrets.js)
+RUN (cd ${CONFLUX_NODE_ROOT}/utils && npm i && node genesis_secrets.js)
 
 WORKDIR /workspaces/
 
