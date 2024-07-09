@@ -59,7 +59,7 @@ async function faucet() {
     // Check if the destination address is a valid Conflux address
     if (address.isValidCfxAddress(destinationAddress)) {
         // Send transaction to the Conflux address
-        const transactionHash = await conflux.cfx.sendTransaction({
+        await conflux.cfx.sendTransaction({
             from: miner.address,
             to: destinationAddress,
             value: Drip.fromCFX(parseFloat(requestAmount)),

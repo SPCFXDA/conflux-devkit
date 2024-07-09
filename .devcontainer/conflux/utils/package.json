@@ -13,5 +13,10 @@
     "ethereumjs-util": "^7.1.5",
     "js-conflux-sdk": "^2.4.5",
     "toml": "^3.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.6.0",
+    "eslint": "^9.6.0",
+    "globals": "^15.8.0"
   }
 }
