@@ -35,6 +35,7 @@ RUN export WAYPOINT=$(cat ${CONFLUX_NODE_ROOT}/pos_config/waypoint_config) && ca
 
 RUN cat /tmp/dev_node.sh.template | envsubst > /usr/bin/dev_node && chmod +x /usr/bin/dev_node 
 RUN cat /tmp/genesis_espace.sh.template | envsubst > /usr/bin/genesis_espace && chmod +x /usr/bin/genesis_espace
+RUN cat /tmp/genesis_list.sh.template | envsubst > /usr/bin/genesis_list && chmod +x /usr/bin/genesis_list
 RUN cat /tmp/faucet.sh.template | envsubst > /usr/bin/faucet && chmod +x /usr/bin/faucet
 
 ARG USERNAME=node
