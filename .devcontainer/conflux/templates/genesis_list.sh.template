@@ -1,2 +1,2 @@
 #!/bin/bash
-cat $CONFLUX_NODE_ROOT/utils/genesis_secrets.txt && echo
+cat $CONFLUX_NODE_ROOT/genesis_secrets.txt && echo
