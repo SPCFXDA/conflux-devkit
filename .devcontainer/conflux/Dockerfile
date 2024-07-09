@@ -1,23 +1,4 @@
-FROM rust:1.77.2-slim AS builder
-ARG CONFLUX_VERSION="v2.4.0"
-
-RUN apt-get update && apt-get install -y \
-    git \
-    clang \
-    libsqlite3-dev \
-    pkg-config \
-    libssl-dev \
-    cmake \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /work
-
-RUN git clone -b ${CONFLUX_VERSION} --single-branch --depth 1 https://github.com/Conflux-Chain/conflux-rust.git conflux 
-
-WORKDIR /work/conflux
-
-RUN export CC=clang && export CXX=clang++ && cargo build --release
-
+FROM confluxchain/conflux-rust:2.4.0 AS release
 FROM node:20-slim AS devkit
 
 ARG CONFLUX_NODE_ROOT="/opt/conflux"
@@ -30,11 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \ 
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /work/conflux/target/release/conflux /bin/conflux
-COPY --from=builder /work/conflux/target/release/cfxkey /bin/cfxkey
-COPY --from=builder /work/conflux/target/release/pos-genesis-tool  /bin/pos-genesis-tool
-COPY --from=builder /work/conflux/target/release/cfx-gen-dot /bin/cfx-gen-dot
-COPY --from=builder /work/conflux/target/release/cfxstore /bin/cfxstore
+COPY --from=release /bin/conflux /bin/conflux
+COPY --from=release /bin/cfxkey /bin/cfxkey
+COPY --from=release /bin/pos-genesis-tool  /bin/pos-genesis-tool
+COPY --from=release /bin/cfx-gen-dot /bin/cfx-gen-dot
+COPY --from=release /bin/cfxstore /bin/cfxstore
 
 RUN mkdir ${CONFLUX_NODE_ROOT} ${CONFLUX_NODE_ROOT}/log ${CONFLUX_NODE_ROOT}/pos_config
 

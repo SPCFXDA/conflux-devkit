@@ -23,7 +23,9 @@ Core:  http://localhost:12537 (or Codespace host instead of localhost)
 
 Espace: http://localhost:8545 (or Codespace host instead of localhost)
 
-During the image build process (which compiles the binary and may take some time, especially in Codespaces with default settings), the node binary will be installed in the system, and all relevant configuration and data directories will be located in the `/opt/conflux/` folder. Five genesis account private keys will be created in the same folder using the following script: [genesis_secrets.js](.devcontainer/conflux/utils/genesis_secrets.js).
+During the image build process the official [conflux-rust](https://hub.docker.com/r/confluxchain/conflux-rust/tags) image will be used to install the precompiled binary, and all relevant configuration and data directories will be located in the `/opt/conflux/` folder and accessible to a Non-Root user.
+
+Five genesis account private keys will be created in the same folder using the following script: [genesis_secrets.js](.devcontainer/conflux/utils/genesis_secrets.js).
 
 The genesis account details can be found in `/opt/conflux/genesis_secrets.txt`. You can import these accounts into your wallet, or you can add your development private key to this file before starting the Conflux node.
 
@@ -61,7 +63,7 @@ You can open this repository in Codespaces using the Codespaces tab under the `C
 
 ![alt text](README/codespace_tab.png)
 
-After a few minutes, depending on the configured machine, the environment will be ready to use.
+After the build and download of the layers are completed, the environment will be ready to use.
 
 ### Run in VS Code devcontainer
 
@@ -101,9 +103,15 @@ Open your browser and navigate to `http://localhost:5000` to access the OpenVSCo
 ## Configuration
 
 ### Environment Variables
+- `CONFLUX_NODE_ROOT`: Specifies the location of the node files. The default value is `/opt/conflux`
+- `CONFIG_PATH`: Specifies the location of the TOML for the node main configuration file.
 
-- `NODE_VERSION`: Specifies the version of Conflux Node to use (default is `2.3.5`).
+- `USERNAME`: The preconfigured user is `node` with UID:GUI 1000:1000 from the `node:20-slim`, 
+- `USER_UID`: If a new user needs to be created, `USERNAME`, `USER_UID`, `USER_GID`
+- `USER_GID`: needs to be changed accordingly
+
 - `SERVER_VERSION`: Specifies the version of OpenVSCode server to use (default is `1.90.0`).
+- `OPENVSCODE_SERVER_ROOT`: Specifies the location where openvscode release will be installed, (default is `/opt/openvscode-server`)
 
 ### Ports
 
@@ -126,8 +134,10 @@ To enable the creation of a custom user, uncomment the following lines in the [d
 			// "USER_GID": "1001"
 ```
 
-Ensure you set the correct `USERNAME`, `USER_UID`, and `USER_GID` values for your system.
-The default user is `node`, with `1000:1000` as UID:GID and already exist on the base `node:20-slim` image.
+Ensure you set the correct `USERNAME`, `USER_UID`, and `USER_GID` values for your system. The default user is `node`, with `1000:1000` as the UID:GID, which already exists in the base `node:20-slim` image. 
+
+On Linux systems, the first user typically starts with the `1000:1000` UID:GID. If you have multiple users on your system, you may need to change the Docker user to avoid read/write permission issues between the local filesystem and the Docker image.
+
 
 ### Passwordless Sudo
 
