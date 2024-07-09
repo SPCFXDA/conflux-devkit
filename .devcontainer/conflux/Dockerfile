@@ -1,23 +1,4 @@
-FROM rust:1.77.2-slim AS builder
-ARG CONFLUX_VERSION="v2.4.0"
-
-RUN apt-get update && apt-get install -y \
-    git \
-    clang \
-    libsqlite3-dev \
-    pkg-config \
-    libssl-dev \
-    cmake \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /work
-
-RUN git clone -b ${CONFLUX_VERSION} --single-branch --depth 1 https://github.com/Conflux-Chain/conflux-rust.git conflux 
-
-WORKDIR /work/conflux
-
-RUN export CC=clang && export CXX=clang++ && cargo build --release
-
+FROM confluxchain/conflux-rust:2.4.0 AS release
 FROM node:20-slim AS devkit
 
 ARG CONFLUX_NODE_ROOT="/opt/conflux"
@@ -30,39 +11,37 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \ 
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /work/conflux/target/release/conflux /bin/conflux
-COPY --from=builder /work/conflux/target/release/cfxkey /bin/cfxkey
-COPY --from=builder /work/conflux/target/release/pos-genesis-tool  /bin/pos-genesis-tool
-COPY --from=builder /work/conflux/target/release/cfx-gen-dot /bin/cfx-gen-dot
-COPY --from=builder /work/conflux/target/release/cfxstore /bin/cfxstore
+COPY --from=release /bin/conflux /bin/conflux
+COPY --from=release /bin/cfxkey /bin/cfxkey
+COPY --from=release /bin/pos-genesis-tool  /bin/pos-genesis-tool
+COPY --from=release /bin/cfx-gen-dot /bin/cfx-gen-dot
+COPY --from=release /bin/cfxstore /bin/cfxstore
 
 RUN mkdir ${CONFLUX_NODE_ROOT} ${CONFLUX_NODE_ROOT}/log ${CONFLUX_NODE_ROOT}/pos_config
 
 ADD utils ${CONFLUX_NODE_ROOT}/utils
-ADD templates /tmp/templates
+ADD templates /tmp/
 
 ENV CHAIN_ID=2029
 ENV EVM_CHAIN_ID=2030
 ENV CONFLUX_NODE_ROOT=${CONFLUX_NODE_ROOT}
 ENV CONFIG_PATH=${CONFIG_PATH}
 
-RUN cat /tmp/templates/log.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/log.yaml
-RUN cat /tmp/templates/develop.toml.template | envsubst > ${CONFIG_PATH}
+RUN cat /tmp/log.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/log.yaml
+RUN cat /tmp/develop.toml.template | envsubst > ${CONFIG_PATH}
 
 RUN (cd ${CONFLUX_NODE_ROOT}/pos_config && pos-genesis-tool random --initial-seed=0000000000000000000000000000000000000000000000000000000000000000  --num-validator=1 --num-genesis-validator=1 --chain-id=${CHAIN_ID})
+RUN export WAYPOINT=$(cat ${CONFLUX_NODE_ROOT}/pos_config/waypoint_config) && cat /tmp/pos_config.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/pos_config/pos_config.yaml
 
-RUN export WAYPOINT=$(cat ${CONFLUX_NODE_ROOT}/pos_config/waypoint_config) && cat /tmp/templates/pos_config.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/pos_config/pos_config.yaml
-
-RUN cat /tmp/templates/dev_node.sh.template | envsubst > /usr/bin/dev_node && chmod +x /usr/bin/dev_node 
-
-RUN echo '#!/bin/bash\nnode '${CONFLUX_NODE_ROOT}'/utils/genesis_espace.js' > /usr/bin/genesis_espace && \
-    chmod +x /usr/bin/genesis_espace
+RUN cat /tmp/dev_node.sh.template | envsubst > /usr/bin/dev_node && chmod +x /usr/bin/dev_node 
+RUN cat /tmp/genesis_espace.sh.template | envsubst > /usr/bin/genesis_espace && chmod +x /usr/bin/genesis_espace
+RUN cat /tmp/faucet.sh.template | envsubst > /usr/bin/faucet && chmod +x /usr/bin/faucet
 
 ARG USERNAME=node
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
-# Enable these row to enable the creation of a custom user, remember to set the correct USERNAME, USER_UID and USER_GID
+# Create new user is $USERNAME don't exist
 RUN id -u $USERNAME >/dev/null 2>&1 || (groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME)
 
@@ -74,7 +53,7 @@ RUN chown -R ${USER_UID}:${USER_GID} ${CONFLUX_NODE_ROOT}
 
 USER $USERNAME
 
-RUN (cd ${CONFLUX_NODE_ROOT}/utils && npm i && CONFIG_PATH=${CONFIG_PATH} node genesis_secrets.js)
+RUN (cd ${CONFLUX_NODE_ROOT}/utils && npm i && node genesis_secrets.js)
 
 WORKDIR /workspaces/
 

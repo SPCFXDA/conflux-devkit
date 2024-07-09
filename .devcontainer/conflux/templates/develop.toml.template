@@ -66,7 +66,7 @@ dev_pos_private_key_encryption_password = "CFXV20"
 # The value is a 40-digit hex string or a valid CIP-37 base32 address.
 # By default, the value is not set.
 #
-# mining_author="cfx:aarc9abycue0hhzgyrr53m6cxedgccrmmyybjgh4xg"
+mining_author="net2029:aarpwaxy0wp9xp7kn36rajw9fmnujnc6ky7gg3a50s"
 
 # `mining_type` controls whether the mining process goes through the
 # stratum protocol, uses CPU-mining, or disable mining.
