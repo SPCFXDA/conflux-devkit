@@ -14,6 +14,18 @@ The `independent chain` will be reachable with the following RPC that can be add
 - Core:  http://localhost:12537 (or Codespace host instead of localhost)
 - Espace: http://localhost:8545 (or Codespace host instead of localhost)
 
+You can test the endpoint with the following command from your local system:
+
+```sh
+curl --location 'http://localhost:12537' --header 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"cfx_clientVersion","params":[],"id":67}'
+```
+
+the response should look like this:
+
+```json
+{"jsonrpc":"2.0","result":"conflux-rust/v2.4.0-205095d-20240628/x86_64-linux-gnu/rustc1.77.2","id":67}
+```
+
 During the image build process the official [conflux-rust](https://hub.docker.com/r/confluxchain/conflux-rust/tags) image will be used to install the precompiled binary, and all relevant configuration and data directories will be located in the `/opt/conflux/` folder and accessible to a Non-Root user.
 
 Five genesis account private keys will be created in the same folder using the following script: [genesis_secrets.js](.devcontainer/conflux/utils/genesis_secrets.js).
@@ -154,21 +166,23 @@ After making changes to any file to suit your preferences, rebuild the container
 This rebuilds the devcontainer with your modified settings, ensuring that your changes take effect in the development environment.
 
 ### Run the Docker Container with OpenVSCode Server
-TO quickly execute the devkit-server you can use the following command:
+To quickly start the DevKit server with OpenVSCode Server, use the following command:
 ```bash
-docker run -it -p 12537:12537 -p 8535:8535 -v "$(pwd):/workspaces:cached" --rm --name devkit-server spcfxda/conflux-devkit-server
+docker run -it -p 5000:5000 -p 12537:12537 -p 8535:8535 -v "$(pwd):/workspaces:cached" --rm --name devkit-server spcfxda/conflux-devkit-server
 ```
-
-#### Explanation of -v "$(pwd):/workspaces:cached":
-The `-v "$(pwd):/workspaces:cached"` option in the Docker run command mounts the current working directory (retrieved by `$(pwd)`) to the /workspaces directory inside the Docker container.
-
-This allows you to share files between your local environment and the container.
-
-The :cached option improves performance by caching the contents of the mounted directory, reducing the number of times Docker needs to check for changes.
+This command performs the following actions:
+- **`-it`**: Runs the container in interactive mode with a TTY enabled, allowing you to interact with the container via the command line.
+- **`-p 5000:5000`**: Maps port 5000 on your local machine to port 5000 in the container, providing access to the OpenVSCode Server.
+- **`-p 12537:12537`**: Maps port 12537 on your local machine to port 12537 in the container, providing access to the Conflux Core RPC endpoint.
+- **`-p 8535:8535`**: Maps port 8535 on your local machine to port 8535 in the container, providing access to the Conflux ESpace RPC endpoint.
+- **`-v "$(pwd):/workspaces:cached"`**: Mounts the current directory on your local machine (`$(pwd)`) to the `/workspaces` directory in the container with caching enabled, allowing you to work with your local files inside the container.
+- **`--rm`**: Automatically removes the container when it is stopped.
+- **`--name devkit-server`**: Names the running container `devkit-server` for easier management and reference.
 
 Consider that `$(pwd)` is a linux command, in windows you will have to substitute it with the full path of the directory you want to map.
 
 If you need to customize the Dockerfile or some of its configuration you can follow these steps:
+
 1. Clone the repository:
 ```sh
 git clone https://github.com/your-repo/conflux-devkit.git
@@ -233,7 +247,7 @@ These arguments and environment variables provide a flexible way to configure th
 ### Passwordless Sudo
 Passwordless sudo is configured for the user specified by `USERNAME`. This allows the user to execute commands with root privileges without entering a password.
 ## Contributing
-Contributions are welcome! Please fork the repository and submit a pull request for any changes.
+Contributions are welcome! Please refer to the [Contributing guideline](CONTRIBUTING.md) and the [Code of conduct](CODE_OF_CONDUCT.md).
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
