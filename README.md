@@ -154,21 +154,23 @@ After making changes to any file to suit your preferences, rebuild the container
 This rebuilds the devcontainer with your modified settings, ensuring that your changes take effect in the development environment.
 
 ### Run the Docker Container with OpenVSCode Server
-TO quickly execute the devkit-server you can use the following command:
+To quickly start the DevKit server with OpenVSCode Server, use the following command:
 ```bash
 docker run -it -p 5000:5000 -p 12537:12537 -p 8535:8535 -v "$(pwd):/workspaces:cached" --rm --name devkit-server spcfxda/conflux-devkit-server
 ```
-
-#### Explanation of -v "$(pwd):/workspaces:cached":
-The `-v "$(pwd):/workspaces:cached"` option in the Docker run command mounts the current working directory (retrieved by `$(pwd)`) to the /workspaces directory inside the Docker container.
-
-This allows you to share files between your local environment and the container.
-
-The :cached option improves performance by caching the contents of the mounted directory, reducing the number of times Docker needs to check for changes.
+This command performs the following actions:
+- **`-it`**: Runs the container in interactive mode with a TTY enabled, allowing you to interact with the container via the command line.
+- **`-p 5000:5000`**: Maps port 5000 on your local machine to port 5000 in the container, providing access to the OpenVSCode Server.
+- **`-p 12537:12537`**: Maps port 12537 on your local machine to port 12537 in the container, providing access to the Conflux Core RPC endpoint.
+- **`-p 8535:8535`**: Maps port 8535 on your local machine to port 8535 in the container, providing access to the Conflux ESpace RPC endpoint.
+- **`-v "$(pwd):/workspaces:cached"`**: Mounts the current directory on your local machine (`$(pwd)`) to the `/workspaces` directory in the container with caching enabled, allowing you to work with your local files inside the container.
+- **`--rm`**: Automatically removes the container when it is stopped.
+- **`--name devkit-server`**: Names the running container `devkit-server` for easier management and reference.
 
 Consider that `$(pwd)` is a linux command, in windows you will have to substitute it with the full path of the directory you want to map.
 
 If you need to customize the Dockerfile or some of its configuration you can follow these steps:
+
 1. Clone the repository:
 ```sh
 git clone https://github.com/your-repo/conflux-devkit.git
