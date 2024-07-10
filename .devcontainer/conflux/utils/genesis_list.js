@@ -39,7 +39,7 @@ async function genesisList() {
           console.log(`\n######  ACCOUNT ${i}  ######`);
           console.log(`Core Address: ${account.address}`);
           console.log(`eSpace Address: ${eSpaceAddress}`);
-          console.log(`Private Key: ${privateKey}`);
+          console.log(`Private Key: 0x${privateKey}`);
           i++;
         } catch (error) {
           console.error(

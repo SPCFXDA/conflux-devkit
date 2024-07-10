@@ -14,6 +14,18 @@ The `independent chain` will be reachable with the following RPC that can be add
 - Core:  http://localhost:12537 (or Codespace host instead of localhost)
 - Espace: http://localhost:8545 (or Codespace host instead of localhost)
 
+You can test the endpoint with the following command from your local system:
+
+```sh
+curl --location 'http://localhost:12537' --header 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"cfx_clientVersion","params":[],"id":67}'
+```
+
+the response should look like this:
+
+```json
+{"jsonrpc":"2.0","result":"conflux-rust/v2.4.0-205095d-20240628/x86_64-linux-gnu/rustc1.77.2","id":67}
+```
+
 During the image build process the official [conflux-rust](https://hub.docker.com/r/confluxchain/conflux-rust/tags) image will be used to install the precompiled binary, and all relevant configuration and data directories will be located in the `/opt/conflux/` folder and accessible to a Non-Root user.
 
 Five genesis account private keys will be created in the same folder using the following script: [genesis_secrets.js](.devcontainer/conflux/utils/genesis_secrets.js).
@@ -235,7 +247,7 @@ These arguments and environment variables provide a flexible way to configure th
 ### Passwordless Sudo
 Passwordless sudo is configured for the user specified by `USERNAME`. This allows the user to execute commands with root privileges without entering a password.
 ## Contributing
-Contributions are welcome! Please fork the repository and submit a pull request for any changes.
+Contributions are welcome! Please refer to the [Contributing guideline](CONTRIBUTING.md) and the [Code of conduct](CODE_OF_CONDUCT.md).
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
