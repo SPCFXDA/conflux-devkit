@@ -156,7 +156,7 @@ This rebuilds the devcontainer with your modified settings, ensuring that your c
 ### Run the Docker Container with OpenVSCode Server
 TO quickly execute the devkit-server you can use the following command:
 ```bash
-docker run -it -p 12537:12537 -p 8535:8535 -v "$(pwd):/workspaces:cached" --rm --name devkit-server spcfxda/conflux-devkit-server
+docker run -it -p 5000:5000 -p 12537:12537 -p 8535:8535 -v "$(pwd):/workspaces:cached" --rm --name devkit-server spcfxda/conflux-devkit-server
 ```
 
 #### Explanation of -v "$(pwd):/workspaces:cached":
