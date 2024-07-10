@@ -1,8 +1,10 @@
+ARG NODE_RELEASE=2.4.0
+ARG BASE_IMAGE=node:20-slim
 # Use the official Conflux Rust image as the base for release artifacts
-FROM confluxchain/conflux-rust:2.4.0 AS release
+FROM confluxchain/conflux-rust:${NODE_RELEASE} AS release
 
 # Use the official Node.js slim image as the base for the devkit
-FROM node:20-slim AS devkit
+FROM ${BASE_IMAGE} AS devkit
 
 # Set up build arguments for Conflux node configuration
 ARG CONFLUX_NODE_ROOT="/opt/conflux"
@@ -74,6 +76,14 @@ WORKDIR /workspaces/
 # Expose necessary ports
 EXPOSE 3000 12535 12537 8545 8546
 
+# Set environment variables for the user
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    HOME=/workspaces \
+    EDITOR=code \
+    VISUAL=code \
+    GIT_EDITOR="code --wait"
+
 # Execute the development node as default command
 CMD ["dev_node"]
 
@@ -107,14 +117,7 @@ RUN chown -R $USERNAME:$USERNAME ${OPENVSCODE_SERVER_ROOT}
 # Switch back to the created user
 USER $USERNAME
 
-# Set environment variables for OpenVSCode server
-ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8 \
-    HOME=/workspaces \
-    EDITOR=code \
-    VISUAL=code \
-    GIT_EDITOR="code --wait" \
-    OPENVSCODE_SERVER_ROOT=${OPENVSCODE_SERVER_ROOT}
+ENV OPENVSCODE_SERVER_ROOT=${OPENVSCODE_SERVER_ROOT}
 
 # Expose the port for OpenVSCode server
 EXPOSE 5000

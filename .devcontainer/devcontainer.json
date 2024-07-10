@@ -6,7 +6,8 @@
 		"context": "conflux",
 		"dockerfile": "conflux/Dockerfile",
 		"args": {
-			"CONFLUX_VERSION": "v2.4.0",
+			// "NODE_RELEASE": "2.4.0",
+			// "BASE_IMAGE": "node:20-slim",
 			// "CONFLUX_NODE_ROOT": "/opt/conflux",
 			// "USERNAME": "conflux",
 			// "USER_UID": "1001"

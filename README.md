@@ -82,8 +82,41 @@ Click on the `Reopen in Container` button. After the build and download of the l
 
 ![alt text](README/vscode_devcontainer.png)
 
+### Customization for VS Code and Codespaces Devcontainer
 
-### Customization for VS Code and Codespace devcontainer
+The main configuration file for the devcontainer is [devcontainer.json](.devcontainer/devcontainer.json), where you can easily change parameters for building the local Docker image. Here is an excerpt:
+
+```json
+{
+    "name": "Conflux DevKit",
+    "build": {
+        "context": "conflux",
+        "dockerfile": "conflux/Dockerfile",
+        "args": {
+            // "NODE_RELEASE": "2.4.0",
+            // "BASE_IMAGE": "node:20-slim",
+            // "CONFLUX_NODE_ROOT": "/opt/conflux",
+            // "USERNAME": "conflux",
+            // "USER_UID": "1001"
+            // "USER_GID": "1001"
+        },
+        "target": "devkit"
+    },
+    "forwardPorts": [3000, 12535, 12537, 8545, 8546]
+}
+```
+
+**Parameter Descriptions:**
+
+- **`NODE_RELEASE`**: Specifies the tag of the official conflux-rust image. This can be changed to point to a different hardfork version of the binary.
+
+- **`BASE_IMAGE`**: Defines the base image used for the development environment. By default, `node:20-slim` is chosen for compatibility. This can be changed to your preferred base image, although some amendments to the Dockerfile may be necessary.
+
+- **`CONFLUX_NODE_ROOT`**: Sets the destination folder inside the container for all the node data.
+
+- **`USERNAME`**, **`USER_UID`**, **`USER_GID`**: Ensure you set the correct `USERNAME`, `USER_UID`, and `USER_GID` values for your system. The default user is `node`, with `1000:1000` as the UID:GID, which already exists in the base `node:20-slim` image. On Linux systems, the first user typically starts with `1000:1000` UID:GID. If you have multiple users on your system, you may need to change the Docker user to avoid read/write permission issues between the local filesystem and the Docker image.
+
+#### Changing Container Logic and Rebuilding
 
 To customize the behavior of the devcontainer, modify the files located under the [.devcontainer/conflux](.devcontainer/conflux/) directory.
 
@@ -91,16 +124,16 @@ Here's the structure of the devcontainer:
 
 ```
 .
-├── Dockerfile //Dockerfile divided in tre section release, devkit, openvscode
+├── Dockerfile // Dockerfile divided into three sections: release, devkit, openvscode
 ├── templates
-│   ├── develop.toml.template // Node configuration template
-│   ├── dev_node.sh.template
-│   ├── faucet.sh.template
-│   ├── genesis_espace.sh.template
-│   ├── genesis_list.sh.template
-│   ├── log.yaml.template // Node log configuration
-│   └── pos_config.yaml.template // Node PoS configuration
-└── utils // Utility logic wrote in javascript with js-conflux-sdk
+│   ├── develop.toml.template // Node configuration template
+│   ├── dev_node.sh.template
+│   ├── faucet.sh.template
+│   ├── genesis_espace.sh.template
+│   ├── genesis_list.sh.template
+│   ├── log.yaml.template // Node log configuration
+│   └── pos_config.yaml.template // Node PoS configuration
+└── utils // Utility logic written in JavaScript with js-conflux-sdk
     ├── eslint.config.mjs
     ├── faucet.js
     ├── genesis_espace.js
@@ -108,18 +141,17 @@ Here's the structure of the devcontainer:
     ├── genesis_secrets.js
     ├── package.json
     └── package-lock.json
-
 ```
+
 After making changes to any file to suit your preferences, rebuild the container by following these steps:
 
 1. In VS Code, navigate to the bottom left corner and click on the icon that indicates the current status of the devcontainer setup.
 
-![alt text](README/vscode_devcontainer.png)
+    ![alt text](README/vscode_devcontainer.png)
 
 2. From the menu that appears, select `Rebuild container`.
 
 This rebuilds the devcontainer with your modified settings, ensuring that your changes take effect in the development environment.
-
 
 ### Run the Docker Container with OpenVSCode Server
 TO quickly execute the devkit-server you can use the following command:
@@ -155,14 +187,41 @@ docker run -it -p 5000:5000 -p 12537:12537 -p 8545:8545 -v "$(pwd):/workspaces:c
 ### Access the OpenVSCode Server
 Open your browser and navigate to `http://localhost:5000` to access the OpenVSCode server.
 ## Configuration
-### Environment Variables
-- `CONFLUX_NODE_ROOT`: Specifies the location of the node files. The default value is `/opt/conflux`
-- `CONFIG_PATH`: Specifies the location of the TOML for the node main configuration file.
-- `USERNAME`: The preconfigured user is `node` with UID:GUI 1000:1000 from the `node:20-slim`, 
-- `USER_UID`: If a new user needs to be created, `USERNAME`, `USER_UID`, `USER_GID`
-- `USER_GID`: needs to be changed accordingly
-- `SERVER_VERSION`: Specifies the version of OpenVSCode server to use (default is `1.90.0`).
-- `OPENVSCODE_SERVER_ROOT`: Specifies the location where openvscode release will be installed, (default is `/opt/openvscode-server`)
+
+### Build Arguments and Environment Variables
+
+The Dockerfile for the devcontainer includes several build arguments (ARG) and environment variables (ENV) that control various aspects of the build and runtime configuration. Below is a description of each:
+
+**Build Arguments (ARG):**
+
+- **`NODE_RELEASE`**: Specifies the tag of the official Conflux Rust image. This can be modified to use a different version of the binary.
+- **`BASE_IMAGE`**: Defines the base image used for the development environment. The default is `node:20-slim` for compatibility, but it can be changed to another base image if necessary.
+- **`CONFLUX_NODE_ROOT`**: Sets the directory inside the container where all node data will be stored.
+- **`CONFIG_PATH`**: Specifies the path to the main configuration file for the Conflux node.
+- **`USERNAME`**: Defines the default username inside the container. This is set to `node`.
+- **`USER_UID`**: Sets the user ID for the default user.
+- **`USER_GID`**: Sets the group ID for the default user, which is the same as the user ID.
+- **`SERVER_VERSION`**: Specifies the version of OpenVSCode server to be used.
+- **`SERVER_VERSION_NAME`**: Defines the name of the OpenVSCode server version.
+- **`SERVER_VERSION_URL`**: URL to download the specified version of the OpenVSCode server.
+- **`OPENVSCODE_SERVER_ROOT`**: Sets the directory inside the container where OpenVSCode server will be installed.
+
+**Environment Variables (ENV):**
+
+- **`CHAIN_ID=2029`**: Sets the chain ID for the Conflux node.
+- **`EVM_CHAIN_ID=2030`**: Sets the chain ID for the EVM space.
+- **`CONFLUX_NODE_ROOT=${CONFLUX_NODE_ROOT}`**: Ensures the `CONFLUX_NODE_ROOT` path is set as an environment variable.
+- **`CONFIG_PATH=${CONFIG_PATH}`**: Ensures the `CONFIG_PATH` is set as an environment variable.
+- **`LANG=C.UTF-8`**: Sets the language to UTF-8.
+- **`LC_ALL=C.UTF-8`**: Ensures all locale settings use UTF-8.
+- **`HOME=/workspaces`**: Sets the home directory inside the container.
+- **`EDITOR=code`**: Sets the default editor to VS Code.
+- **`VISUAL=code`**: Sets the default visual editor to VS Code.
+- **`GIT_EDITOR="code --wait"`**: Sets VS Code as the editor for Git commits.
+- **`OPENVSCODE_SERVER_ROOT=${OPENVSCODE_SERVER_ROOT}`**: Ensures the `OPENVSCODE_SERVER_ROOT` path is set as an environment variable.
+
+These arguments and environment variables provide a flexible way to configure the development environment to suit different needs and preferences.
+
 ### Ports
 - `3000`: Default port for Node application.
 - `12535`: Core WebSocket RPC.
@@ -171,14 +230,6 @@ Open your browser and navigate to `http://localhost:5000` to access the OpenVSCo
 - `8546`: ESpace WebSocket RPC.
 - `5000`: Port for OpenVSCode server.
 ## Advanced Usage
-### Custom User
-To enable the creation of a custom user, uncomment the following lines in the [devcontainer.json](.devcontainer/devcontainer.json):
-```json
-			// "USERNAME": "conflux",
-			// "USER_UID": "1001"
-			// "USER_GID": "1001"
-```
-Ensure you set the correct `USERNAME`, `USER_UID`, and `USER_GID` values for your system. The default user is `node`, with `1000:1000` as the UID:GID, which already exists in the base `node:20-slim` image. On Linux systems, the first user typically starts with the `1000:1000` UID:GID. If you have multiple users on your system, you may need to change the Docker user to avoid read/write permission issues between the local filesystem and the Docker image.
 ### Passwordless Sudo
 Passwordless sudo is configured for the user specified by `USERNAME`. This allows the user to execute commands with root privileges without entering a password.
 ## Contributing
