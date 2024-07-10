@@ -81,16 +81,60 @@ After opening the repository folder with VS Code, a popup will appear in the bot
 Click on the `Reopen in Container` button. After the build and download of the layers are completed, your VS Code instance will be inside the devcontainer. You can confirm this from the status in the bottom left corner that should look like this:
 
 ![alt text](README/vscode_devcontainer.png)
+
+
+### Customization for VS Code and Codespace devcontainer
+
+To customize the behavior of the devcontainer, modify the files located under the [.devcontainer/conflux](.devcontainer/conflux/) directory.
+
+Here's the structure of the devcontainer:
+
+```
+.
+├── Dockerfile //Dockerfile divided in tre section release, devkit, openvscode
+├── templates
+│   ├── develop.toml.template // Node configuration template
+│   ├── dev_node.sh.template
+│   ├── faucet.sh.template
+│   ├── genesis_espace.sh.template
+│   ├── genesis_list.sh.template
+│   ├── log.yaml.template // Node log configuration
+│   └── pos_config.yaml.template // Node PoS configuration
+└── utils // Utility logic wrote in javascript with js-conflux-sdk
+    ├── eslint.config.mjs
+    ├── faucet.js
+    ├── genesis_espace.js
+    ├── genesis_list.js
+    ├── genesis_secrets.js
+    ├── package.json
+    └── package-lock.json
+
+```
+After making changes to any file to suit your preferences, rebuild the container by following these steps:
+
+1. In VS Code, navigate to the bottom left corner and click on the icon that indicates the current status of the devcontainer setup.
+
+![alt text](README/vscode_devcontainer.png)
+
+2. From the menu that appears, select `Rebuild container`.
+
+This rebuilds the devcontainer with your modified settings, ensuring that your changes take effect in the development environment.
+
+
 ### Run the Docker Container with OpenVSCode Server
 TO quickly execute the devkit-server you can use the following command:
 ```bash
 docker run -it -p 12537:12537 -p 8535:8535 -v "$(pwd):/workspaces:cached" --rm --name devkit-server spcfxda/conflux-devkit-server
 ```
 
-Explanation of -v "$(pwd):/workspaces:cached":
-The -v "$(pwd):/workspaces:cached" option in the Docker run command mounts the current working directory (retrieved by $(pwd)) to the /workspaces directory inside the Docker container. This allows you to share files between your local environment and the container. The :cached option improves performance by caching the contents of the mounted directory, reducing the number of times Docker needs to check for changes.
+#### Explanation of -v "$(pwd):/workspaces:cached":
+The `-v "$(pwd):/workspaces:cached"` option in the Docker run command mounts the current working directory (retrieved by `$(pwd)`) to the /workspaces directory inside the Docker container.
 
-consider that $(pwd) is a linux command, in windows you will have to substitute it with the full path of the directory you want to map.
+This allows you to share files between your local environment and the container.
+
+The :cached option improves performance by caching the contents of the mounted directory, reducing the number of times Docker needs to check for changes.
+
+Consider that `$(pwd)` is a linux command, in windows you will have to substitute it with the full path of the directory you want to map.
 
 If you need to customize the Dockerfile or some of its configuration you can follow these steps:
 1. Clone the repository:
@@ -100,7 +144,7 @@ cd conflux-devkit
 ```
 2. After you saved the changes you needed, to start the container with the Conflux node and OpenVSCode server, use the `start_server.sh` script located in the root of the repository:
 ```sh
-/start_server.sh
+./start_server.sh
 ```
 The content of the script will build and run the Docker instance. This is the content of the shell script for reference:
 ```sh
