@@ -9,44 +9,52 @@ const configPath = process.env.CONFIG_PATH || "/opt/conflux/develop.toml";
 
 // Function to generate genesis secrets and configure mining account
 function genesisSecrets() {
-  // Read and parse the configuration file
-  const configString = fs.readFileSync(configPath, "utf-8");
-  const config = TOML.parse(configString);
+  try {
+    // Read and parse the configuration file
+    const configString = fs.readFileSync(configPath, "utf-8");
+    const config = TOML.parse(configString);
 
-  // Array to store generated private keys
-  let secrets = [];
+    // Array to store generated private keys
+    let secrets = [];
 
-  // Generate 5 random accounts and store their private keys (without '0x' prefix) in the secrets array
-  for (let i = 0; i < 5; i++) {
-    const randomAccount = Account.random(undefined, config.chain_id);
-    secrets.push(randomAccount.privateKey.replace("0x", ""));
-  }
-
-  // Append the generated secrets to the genesis secrets file
-  fs.appendFile(config.genesis_secrets, secrets.join("\n"), (err) => {
-    if (err) {
-      console.error("Error appending secrets:", err);
-    } else {
-      console.log("Secrets generated successfully!");
+    // Generate 5 random accounts and store their private keys (without '0x' prefix) in the secrets array
+    for (let i = 0; i < 5; i++) {
+      const randomAccount = Account.random(undefined, config.chain_id);
+      secrets.push(randomAccount.privateKey.replace("0x", ""));
     }
-  });
 
-  // Generate a random mining account
-  const miningAccount = Account.random(undefined, config.chain_id);
+    // Append the generated secrets to the genesis secrets file
+    fs.appendFile(config.genesis_secrets, secrets.join("\n"), (err) => {
+      if (err) {
+        console.error("Error appending secrets:", err.message);
+      } else {
+        console.log("Secrets generated and appended successfully!");
+      }
+    });
 
-  // Update the configuration with the new mining account address
-  config.mining_author = miningAccount.address;
+    // Generate a random mining account
+    const miningAccount = Account.random(undefined, config.chain_id);
 
-  // Write the updated configuration back to the config file
-  fs.writeFileSync(configPath, TOML.stringify(config));
+    // Update the configuration with the new mining account address
+    config.mining_author = miningAccount.address;
 
-  // Write the mining account's private key to a separate file
-  fs.writeFileSync(
-    path.join(path.dirname(config.genesis_secrets), "mining_account.txt"),
-    miningAccount.privateKey,
-  );
+    // Write the updated configuration back to the config file
+    fs.writeFileSync(configPath, TOML.stringify(config));
+    console.log("Configuration file updated successfully!");
 
-  console.log("Mining account configured successfully!");
+    // Write the mining account's private key to a separate file
+    const miningAccountPath = path.join(
+      path.dirname(config.genesis_secrets),
+      "mining_account.txt",
+    );
+    fs.writeFileSync(miningAccountPath, miningAccount.privateKey);
+    console.log(
+      `Mining account configured successfully! Private key saved to ${miningAccountPath}`,
+    );
+  } catch (error) {
+    console.error("An error occurred:", error.message);
+    process.exit(1);
+  }
 }
 
 // Execute the genesisSecrets function

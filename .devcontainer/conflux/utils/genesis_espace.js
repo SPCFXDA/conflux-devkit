@@ -47,12 +47,19 @@ async function genesisToeSpace() {
 
         // Log the result of the transaction
         if (receipt.outcomeStatus === 0) {
-          console.log(`Transfer from ${account.address} to ${eSpaceAddress} succeeded`);
+          console.log(
+            `Transfer from ${account.address} to ${eSpaceAddress} succeeded`,
+          );
         } else {
-          console.error(`Transfer from ${account.address} to ${eSpaceAddress} failed`);
+          console.error(
+            `Transfer from ${account.address} to ${eSpaceAddress} failed`,
+          );
         }
       } catch (error) {
-        console.error(`Failed to process private key ${privateKey}:`, error.message);
+        console.error(
+          `Failed to process private key ${privateKey}:`,
+          error.message,
+        );
       }
     }
 
@@ -67,7 +74,9 @@ async function genesisToeSpace() {
   } catch (error) {
     // Handle errors
     if (error.errno === -111) {
-      console.warn(`Failed to connect to ${error.address}:${error.port}. Have you started the local node with the "dev_node" command?`);
+      console.warn(
+        `Failed to connect to ${error.address}:${error.port}. Have you started the local node with the "dev_node" command?`,
+      );
     } else {
       console.error("An error occurred:", error.message);
     }
