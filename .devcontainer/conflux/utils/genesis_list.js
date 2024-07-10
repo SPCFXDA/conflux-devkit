@@ -1,7 +1,7 @@
 // Import required modules
 const TOML = require("@iarna/toml"); // For parsing TOML files
 const fs = require("fs"); // For file system operations
-const { Conflux, Drip } = require("js-conflux-sdk"); // Conflux SDK for blockchain interactions
+const { Conflux } = require("js-conflux-sdk"); // Conflux SDK for blockchain interactions
 const { privateToAddress } = require("ethereumjs-util"); // Utility for converting private key to address
 
 // Define paths and RPC host from environment variables or default values
@@ -24,17 +24,17 @@ async function genesisList() {
     // Read and process the genesis secrets file
     const secrets = fs.readFileSync(config.genesis_secrets, "utf-8");
 
-    // Split the secrets file into lines and process each 
+    // Split the secrets file into lines and process each
     let i = 0;
     secrets.split(/\r?\n/).forEach((privateKey) => {
       if (privateKey.length) {
         try {
           // Add the private key to Conflux wallet
           const account = conflux.wallet.addPrivateKey(`0x${privateKey}`);
-          
+
           // Generate eSpace address from the private key
           const eSpaceAddress = `0x${privateToAddress(Buffer.from(privateKey, "hex")).toString("hex")}`;
-          
+
           // Log account details
           console.log(`\n######  ACCOUNT ${i}  ######`);
           console.log(`Core Address: ${account.address}`);
@@ -42,7 +42,10 @@ async function genesisList() {
           console.log(`Private Key: ${privateKey}`);
           i++;
         } catch (error) {
-          console.error(`Failed to process private key ${privateKey}:`, error.message);
+          console.error(
+            `Failed to process private key ${privateKey}:`,
+            error.message,
+          );
         }
       }
     });

@@ -46,7 +46,9 @@ async function faucet() {
 
     // Exit if no arguments are provided
     if (!args.length) {
-      console.warn("No arguments provided. Please provide the request amount and destination address (faucet <amount> <address>).");
+      console.warn(
+        "No arguments provided. Please provide the request amount and destination address (faucet <amount> <address>).",
+      );
       return;
     }
 
@@ -71,7 +73,7 @@ async function faucet() {
         value: Drip.fromCFX(parseFloat(requestAmount)),
       });
       console.log(
-        `${requestAmount} CFX successfully sent to ${destinationAddress}`
+        `${requestAmount} CFX successfully sent to ${destinationAddress}`,
       );
       return;
     }
@@ -109,7 +111,9 @@ async function faucet() {
   } catch (error) {
     // Handle connection error
     if (error.errno === -111) {
-      console.warn(`Failed to connect to ${error.address}:${error.port}. Have you started the local node with the "dev_node" command?`);
+      console.warn(
+        `Failed to connect to ${error.address}:${error.port}. Have you started the local node with the "dev_node" command?`,
+      );
     } else {
       console.error("An error occurred:", error.message);
     }
