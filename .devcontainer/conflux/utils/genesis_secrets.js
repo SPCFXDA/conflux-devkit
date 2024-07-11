@@ -45,7 +45,7 @@ function genesisSecrets() {
     // Write the mining account's private key to a separate file
     const miningAccountPath = path.join(
       path.dirname(config.genesis_secrets),
-      "mining_account.txt",
+      "mining_secret.txt",
     );
     fs.writeFileSync(miningAccountPath, miningAccount.privateKey);
     console.log(
