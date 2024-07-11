@@ -43,10 +43,10 @@ RUN cat /tmp/log.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/log.yaml && \
     cat /tmp/develop.toml.template | envsubst > ${CONFIG_PATH} && \
     (cd ${CONFLUX_NODE_ROOT}/pos_config && pos-genesis-tool random --initial-seed=0000000000000000000000000000000000000000000000000000000000000000 --num-validator=1 --num-genesis-validator=1 --chain-id=${CHAIN_ID}) && \
     export WAYPOINT=$(cat ${CONFLUX_NODE_ROOT}/pos_config/waypoint_config) && cat /tmp/pos_config.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/pos_config/pos_config.yaml && \
-    cat /tmp/dev_node.sh.template | envsubst > /usr/bin/dev_node && chmod +x /usr/bin/dev_node && \
-    cat /tmp/genesis_espace.sh.template | envsubst > /usr/bin/genesis_espace && chmod +x /usr/bin/genesis_espace && \
-    cat /tmp/genesis_list.sh.template | envsubst > /usr/bin/genesis_list && chmod +x /usr/bin/genesis_list && \
-    cat /tmp/faucet.sh.template | envsubst > /usr/bin/faucet && chmod +x /usr/bin/faucet
+    cat /tmp/sh/dev_node.sh.template | envsubst > /usr/bin/dev_node && chmod +x /usr/bin/dev_node && \
+    cat /tmp/sh/genesis_espace.sh.template | envsubst > /usr/bin/genesis_espace && chmod +x /usr/bin/genesis_espace && \
+    cat /tmp/sh/genesis_list.sh.template | envsubst > /usr/bin/genesis_list && chmod +x /usr/bin/genesis_list && \
+    cat /tmp/sh/faucet.sh.template | envsubst > /usr/bin/faucet && chmod +x /usr/bin/faucet
 
 # Set up user creation arguments
 ARG USERNAME=node

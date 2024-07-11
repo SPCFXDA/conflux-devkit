@@ -8,8 +8,8 @@ const { privateToAddress } = require("ethereumjs-util"); // Utility for converti
 const configPath = process.env.CONFIG_PATH || "/opt/conflux/develop.toml";
 const rpcHost = process.env.RPC_HOST || "localhost";
 
-// Main function to handle the genesis to eSpace transfer
-async function genesisList() {
+// Main function to list genesis accounts
+function genesisList() {
   try {
     // Read and parse the configuration file
     const configString = fs.readFileSync(configPath, "utf-8");

@@ -5,7 +5,7 @@ const { Conflux, Drip, address } = require("js-conflux-sdk"); // Conflux SDK for
 const { isValidAddress } = require("ethereumjs-util"); // Utility for validating Ethereum addresses
 
 // Define paths and RPC host from environment variables or default values
-const secretPath = process.env.MINER_PATH || "/opt/conflux/mining_account.txt";
+const secretPath = process.env.MINER_PATH || "/opt/conflux/mining_secret.txt";
 const configPath = process.env.CONFIG_PATH || "/opt/conflux/develop.toml";
 const rpcHost = process.env.RPC_HOST || "localhost";
 

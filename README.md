@@ -9,7 +9,7 @@ Conflux DevKit provides an easy-to-setup development environment for the Conflux
 - Compatibility with GitHub Codespaces and VS Code's devcontainer feature.
 ## What is available in this dev environment
 Using the following [Dockerfile](.devcontainer/conflux/Dockerfile) and [develop.toml.template](.devcontainer/conflux/templates/develop.toml.template), the Docker instance will create an [independent chain](https://doc.confluxnetwork.org/docs/general/run-a-node/advanced-topics/running-independent-chain).
-The `independent chain` will be reachable with the following RPC that can be added to [Fluent](https://fluentwallet.com/) or [Metamask](https://metamask.io/) wallet:
+The `independent chain` will be reachable with the following RPC that can be added to [Fluent](https://fluentwallet.com/) (Core and eSpace) or [Metamask](https://metamask.io/) (eSpace) wallet:
 
 - Core:  http://localhost:12537 (or Codespace host instead of localhost)
 - Espace: http://localhost:8545 (or Codespace host instead of localhost)
@@ -30,25 +30,21 @@ During the image build process the official [conflux-rust](https://hub.docker.co
 
 Five genesis account private keys will be created in the same folder using the following script: [genesis_secrets.js](.devcontainer/conflux/utils/genesis_secrets.js).
 
-The genesis account will be funded with 10000 CFX and the details can be found in `/opt/conflux/genesis_secrets.txt` or you can use the `genesis_list` command. You can import these accounts into your wallet, or you can add your development private key to this file before starting the Conflux node.
+The genesis account will be funded with 10000 CFX and the details can be found in `/opt/conflux/genesis_secrets.txt` or you can use the `genesis_list` command. 
+
+You can import these accounts into your wallet, or you can add your development private key to this file before starting the Conflux node.
 
 If you are using the devcontainer setup, to start the `independent chain`, open the terminal in the VS Code interface (this is the same for the locally installed VS Code or the web-based one in Codespaces or OpenVSCode-Server) and use this command:
 
 ```sh
 dev_node
 ```
-`dev_node` is a shell script located in `/usr/bin/dev_node` with the following content:
-```sh
-#/bin/bash
-ulimit -n 10000
-export RUST_BACKTRACE=1
-conflux --config /opt/conflux/develop.toml
-```
 Once the `independent chain` is running, you can open another terminal and transfer funds from the genesis Core addresses to their ESpace addresses with the following command:
 ```sh
 genesis_espace
 ```
 This command executes the [genesis_espace](.devcontainer/conflux/utils/genesis_espace.js) script that reads the genesis private keys and uses them to call the [crossSpaceCall](https://doc.confluxnetwork.org/docs/core/core-space-basics/internal-contracts/crossSpaceCall) internal contract.
+
 Or you can send CFX to a Core or Espace address with the [faucet](.devcontainer/conflux/utils/faucet.js) script that will use the miner account to fund the faucet. You can check the faucet availability by invoking the script with the following command in the terminal:
 ```
 faucet
@@ -64,6 +60,7 @@ For ESpace:
 faucet 100 0xAAC38E2c9D8389D0a6df1abB078aC67a2428294a
 ```
 The script will recognize the type of address and do a simple transfer or call the internal contract for cross space call.
+
 ## Getting Started
 ### Prerequisites
 - Docker installed on your machine (if used locally).
@@ -134,25 +131,28 @@ To customize the behavior of the devcontainer, modify the files located under th
 
 Here's the structure of the devcontainer:
 
-```
+```c
 .
-├── Dockerfile // Dockerfile divided into three sections: release, devkit, openvscode
-├── templates
-│   ├── develop.toml.template // Node configuration template
-│   ├── dev_node.sh.template
-│   ├── faucet.sh.template
-│   ├── genesis_espace.sh.template
-│   ├── genesis_list.sh.template
-│   ├── log.yaml.template // Node log configuration
-│   └── pos_config.yaml.template // Node PoS configuration
-└── utils // Utility logic written in JavaScript with js-conflux-sdk
-    ├── eslint.config.mjs
-    ├── faucet.js
-    ├── genesis_espace.js
-    ├── genesis_list.js
-    ├── genesis_secrets.js
-    ├── package.json
-    └── package-lock.json
+├── conflux
+│   ├── Dockerfile // Dockerfile divided into three sections: release, devkit, openvscode
+│   ├── templates
+│   │   ├── develop.toml.template     // Node configuration
+│   │   ├── log.yaml.template         // Node log configuration
+│   │   ├── pos_config.yaml.template  // Node PoS configuration
+│   │   └── sh                        // Shell wrappers
+│   │       ├── dev_node.sh.template
+│   │       ├── faucet.sh.template
+│   │       ├── genesis_espace.sh.template
+│   │       └── genesis_list.sh.template
+│   └── utils    // Utility logic written in JavaScript with js-conflux-sdk
+│       ├── eslint.config.mjs
+│       ├── faucet.js
+│       ├── genesis_espace.js
+│       ├── genesis_list.js
+│       ├── genesis_secrets.js
+│       ├── package.json
+│       └── package-lock.json
+└── devcontainer.json
 ```
 
 After making changes to any file to suit your preferences, rebuild the container by following these steps:
@@ -245,7 +245,10 @@ These arguments and environment variables provide a flexible way to configure th
 - `5000`: Port for OpenVSCode server.
 ## Advanced Usage
 ### Passwordless Sudo
-Passwordless sudo is configured for the user specified by `USERNAME`. This allows the user to execute commands with root privileges without entering a password.
+Passwordless [sudo](https://manpages.debian.org/bookworm/sudo/sudo.8.en.html) is configured for the user specified by USERNAME. This configuration allows the user to execute commands with root privileges without needing to enter a password.
+
+Using `sudo` you can install new packages with [apt](https://manpages.debian.org/bookworm/apt/apt.8.en.html) or make system modifications as needed. However, please note that any changes made this way will be lost if the image is rebuilt. To ensure that your changes persist, you should amend the Dockerfile accordingly.
+
 ## Contributing
 Contributions are welcome! Please refer to the [Contributing guideline](CONTRIBUTING.md) and the [Code of conduct](CODE_OF_CONDUCT.md).
 ## License
