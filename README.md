@@ -7,6 +7,18 @@ Conflux DevKit provides an easy-to-setup development environment for the Conflux
 - Consistent and isolated development environment.
 - Integrated OpenVSCode server for a web-based development experience.
 - Compatibility with GitHub Codespaces and VS Code's devcontainer feature.
+
+## Using This Repository for Your Own Project
+
+There are several ways to reuse the code from this repository. We recommend the following method:
+
+1. Download the zip file of the template branch: [template](https://github.com/SPCFXDA/conflux-devkit/archive/refs/heads/template.zip).
+2. Extract the contents of the zip file.
+3. Follow the instructions in the README.md file to set up your project.
+4. Initialize your new Git repository from this template.
+
+
+
 ## What is available in this dev environment
 Using the following [Dockerfile](.devcontainer/conflux/Dockerfile) and [develop.toml.template](.devcontainer/conflux/templates/develop.toml.template), the Docker instance will create an [independent chain](https://doc.confluxnetwork.org/docs/general/run-a-node/advanced-topics/running-independent-chain).
 The `independent chain` will be reachable with the following RPC that can be added to [Fluent](https://fluentwallet.com/) (Core and eSpace) or [Metamask](https://metamask.io/) (eSpace) wallet:
