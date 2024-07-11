@@ -188,16 +188,12 @@ If you need to customize the Dockerfile or some of its configuration you can fol
 git clone https://github.com/your-repo/conflux-devkit.git
 cd conflux-devkit
 ```
-2. After you saved the changes you needed, to start the container with the Conflux node and OpenVSCode server, use the `start_server.sh` script located in the root of the repository:
+2. After you saved the changes you needed, to start the container with the Conflux node and OpenVSCode server, use the following commands:
 ```sh
-./start_server.sh
-```
-The content of the script will build and run the Docker instance. This is the content of the shell script for reference:
-```sh
-#/bin/bash
 docker build .devcontainer/conflux --tag "conflux-devkit-server"
 docker run -it -p 5000:5000 -p 12537:12537 -p 8545:8545 -v "$(pwd):/workspaces:cached" -d conflux-devkit-server --name conflux-devkit-server
 ```
+
 ### Access the OpenVSCode Server
 Open your browser and navigate to `http://localhost:5000` to access the OpenVSCode server.
 ## Configuration
