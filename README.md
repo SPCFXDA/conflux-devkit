@@ -267,6 +267,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - [Conflux](https://confluxnetwork.org/)
 - [Conflux-Rust](https://github.com/Conflux-Chain/conflux-rust/releases)
 - [Conflux-Docker](https://github.com/Conflux-Chain/conflux-docker/tree/master)
+- [js-conflux-sdk](https://github.com/Conflux-Chain/js-conflux-sdk)
 - [Fluent](https://fluentwallet.com/)
 - [OpenVSCode Server](https://github.com/gitpod-io/openvscode-server)
 
