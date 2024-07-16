@@ -2,3 +2,5 @@
 .cache
 .local
 .openvscode-server
+.devcontainer/conflux/utils/dist
+.devcontainer/conflux/utils/node_modules
