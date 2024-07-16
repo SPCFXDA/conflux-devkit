@@ -256,8 +256,16 @@ function askConfirmation(question: string): Promise<boolean> {
   });
 }
 
-export async function genesisSecrets(): Promise<void> {
+export async function genesisSecrets(value: string): Promise<void> {
   try {
+    let valueInt: number;
+    if (!isNumeric(value)) {
+      console.error(`${value} is not a valid number.`);
+      return;
+    } else {
+      valueInt = parseInt(value);
+    }
+
     const genesisSecretsPath = config.genesis_secrets;
     const miningAccountPath = path.join(
       path.dirname(genesisSecretsPath),
@@ -265,21 +273,27 @@ export async function genesisSecrets(): Promise<void> {
     );
 
     // Check if genesis secrets file exists and ask for confirmation to append new rows
+    // if (existsSync(genesisSecretsPath)) {
+    //   const confirmAppend = await askConfirmation(
+    //     `The file ${genesisSecretsPath} already exists. Do you want to append new rows? (y/n): `,
+    //   );
+    //   if (!confirmAppend) {
+    //     console.log("Appending new rows to genesis secrets file cancelled.");
+    //     return;
+    //   }
+    // }
     if (existsSync(genesisSecretsPath)) {
-      const confirmAppend = await askConfirmation(
-        `The file ${genesisSecretsPath} already exists. Do you want to append new rows? (y/n): `,
+      console.log(
+        `The file ${genesisSecretsPath} already exists.`,
       );
-      if (!confirmAppend) {
-        console.log("Appending new rows to genesis secrets file cancelled.");
-        return;
-      }
+      return;
     }
 
     // Array to store generated private keys
     let secrets: string[] = [];
 
     // Generate 5 random accounts and store their private keys (without '0x' prefix) in the secrets array
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < valueInt; i++) {
       const randomAccount = PrivateKeyAccount.random(
         // @ts-ignore
         undefined,

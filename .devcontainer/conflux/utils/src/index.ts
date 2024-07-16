@@ -17,7 +17,7 @@ program
   .option("-b, --balance", "Balance of the genesis accounts")
   .option("-f, --faucet [value...]", "Faucet <amount> <address>")
   .option("-e, --eSpaceGenesis", "Transfer from Core genesis address to eSpace")
-  .option("-g, --generateGenesis [value]", "Generate genesis adresses")
+  .option("-g, --generateGenesis [value]", "Generate genesis addresses")
   .parse(process.argv);
 
 const options = program.opts();
@@ -36,7 +36,8 @@ if (options.eSpaceGenesis) {
 }
 
 if (options.generateGenesis) {
-  genesisSecrets();
+  let value = options.generateGenesis == true ? "5" : options.generateGenesis; 
+  genesisSecrets(value);
 }
 
 if (options.balance) {

@@ -1,9 +1,17 @@
 # Conflux DevKit
+
 ## Overview
-Conflux DevKit provides an easy-to-setup development environment for the Conflux blockchain spaces (Core Space and ESpace EVM). It leverages Docker to create a devcontainer with all necessary tools, dependencies, and configurations pre-installed, ensuring a seamless and consistent development experience. This repository provides a minimal setup and serves as a foundation for creating more task-specific repositories, such as a Hardhat repository or a frontend template repository.
+
+Conflux DevKit provides an easy-to-setup development environment for the Conflux blockchain spaces (Core Space and ESpace EVM).
+
+It leverages Docker to create a devcontainer with all necessary tools, dependencies, and configurations pre-installed, ensuring a seamless and consistent development experience. 
+
+This repository offers a minimal setup and serves as a foundation for creating more task-specific repositories, such as a Hardhat repository or a frontend template repository.
+
 ## Features
+
 - Pre-configured development environment for Conflux Core, ESpace, and PoS.
-- Simplified setup with all dependencies installed and utilities.
+- Simplified setup with all dependencies installed.
 - Consistent and isolated development environment.
 - Integrated OpenVSCode server for a web-based development experience.
 - Compatibility with GitHub Codespaces and VS Code's devcontainer feature.
@@ -17,14 +25,14 @@ There are several ways to reuse the code from this repository. We recommend the 
 3. Follow the instructions in the README.md file to set up your project.
 4. Initialize your new Git repository from this template.
 
+## What is Available in This Dev Environment
 
+Using the [Dockerfile](.devcontainer/conflux/Dockerfile) and [develop.toml.template](.devcontainer/conflux/templates/develop.toml.template), the Docker instance will create an [independent chain](https://doc.confluxnetwork.org/docs/general/run-a-node/advanced-topics/running-independent-chain).
 
-## What is available in this dev environment
-Using the following [Dockerfile](.devcontainer/conflux/Dockerfile) and [develop.toml.template](.devcontainer/conflux/templates/develop.toml.template), the Docker instance will create an [independent chain](https://doc.confluxnetwork.org/docs/general/run-a-node/advanced-topics/running-independent-chain).
-The `independent chain` will be reachable with the following RPC that can be added to [Fluent](https://fluentwallet.com/) (Core and eSpace) or [Metamask](https://metamask.io/) (eSpace) wallet:
+The independent chain will be reachable with the following RPC endpoints, which can be added to [Fluent](https://fluentwallet.com/) (Core and eSpace) or [Metamask](https://metamask.io/) (eSpace) wallet:
 
-- Core:  http://localhost:12537 (or Codespace host instead of localhost)
-- Espace: http://localhost:8545 (or Codespace host instead of localhost)
+- Core: `http://localhost:12537` (or Codespace host instead of localhost)
+- ESpace: `http://localhost:8545` (or Codespace host instead of localhost)
 
 You can test the endpoint with the following command from your local system:
 
@@ -32,76 +40,116 @@ You can test the endpoint with the following command from your local system:
 curl --location 'http://localhost:12537' --header 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"cfx_clientVersion","params":[],"id":67}'
 ```
 
-the response should look like this:
+The response should look like this:
 
 ```json
-{"jsonrpc":"2.0","result":"conflux-rust/v2.4.0-205095d-20240628/x86_64-linux-gnu/rustc1.77.2","id":67}
+{
+  "jsonrpc": "2.0",
+  "result": "conflux-rust/v2.4.0-205095d-20240628/x86_64-linux-gnu/rustc1.77.2",
+  "id": 67
+}
 ```
 
-During the image build process the official [conflux-rust](https://hub.docker.com/r/confluxchain/conflux-rust/tags) image will be used to install the precompiled binary, and all relevant configuration and data directories will be located in the `/opt/conflux/` folder and accessible to a Non-Root user.
+During the image build process, the official [conflux-rust](https://hub.docker.com/r/confluxchain/conflux-rust/tags) image will be used to install the precompiled binary, and all relevant configuration and data directories will be located in the `/opt/conflux/` folder and accessible to a Non-Root user.
 
-Five genesis account private keys will be created in the same folder using the following script: [genesis_secrets.js](.devcontainer/conflux/utils/genesis_secrets.js).
-
-The genesis account will be funded with 10000 CFX and the details can be found in `/opt/conflux/genesis_secrets.txt` or you can use the `genesis_list` command. 
+Five genesis account private keys will be created in the same folder, and the genesis account will be funded with 10000 CFX. Details can be found in `/opt/conflux/genesis_secrets.txt` or by using the `devkit -l` command.
 
 You can import these accounts into your wallet, or you can add your development private key to this file before starting the Conflux node.
 
-If you are using the devcontainer setup, to start the `independent chain`, open the terminal in the VS Code interface (this is the same for the locally installed VS Code or the web-based one in Codespaces or OpenVSCode-Server) and use this command:
+To start the independent chain in the devcontainer setup, open the terminal in the VS Code interface (this applies to both locally installed VS Code and the web-based version in Codespaces or OpenVSCode-Server) and use the following command:
 
 ```sh
 dev_node
 ```
-Once the `independent chain` is running, you can open another terminal and transfer funds from the genesis Core addresses to their ESpace addresses with the following command:
-```sh
-genesis_espace
-```
-This command executes the [genesis_espace](.devcontainer/conflux/utils/genesis_espace.js) script that reads the genesis private keys and uses them to call the [crossSpaceCall](https://doc.confluxnetwork.org/docs/core/core-space-basics/internal-contracts/crossSpaceCall) internal contract.
 
-Or you can send CFX to a Core or Espace address with the [faucet](.devcontainer/conflux/utils/faucet.js) script that will use the miner account to fund the faucet. You can check the faucet availability by invoking the script with the following command in the terminal:
+### devkit Utility
+
+Once the independent chain is running, you can open another terminal and use the `devkit` utility for various operations.
+
 ```
-faucet
+Usage: devkit [options]
+
+DevKit CLI utils
+
+Options:
+  -V, --version                  output the version number
+  -l, --list                     List genesis accounts
+  -b, --balance                  Balance of the genesis accounts
+  -f, --faucet [value...]        Faucet <amount> <address>
+  -e, --eSpaceGenesis            Transfer from Core genesis address to eSpace
+  -g, --generateGenesis [value]  Generate genesis addresses
+  -h, --help                     display help for command
 ```
-If the amount available is 0, you need to wait a few seconds for the mining rewards to reach the account. Once there are enough funds to send, you can invoke the script in the following way:
-`faucet` `<amount>` `<address>`
-For example, for Core:
+
+To transfer funds from all the genesis Core addresses to their ESpace addresses, use the following command:
+
+```sh
+devkit -e
 ```
-faucet 100 net2029:aarphdvpx0b2xyfg56rn0b6m237cjmbkkjre6fcdby
+
+This command executes a script that reads the genesis private keys and uses them to call the [crossSpaceCall](https://doc.confluxnetwork.org/docs/core/core-space-basics/internal-contracts/crossSpaceCall) internal contract.
+
+To send CFX to a specific account using the funds available to the miner account, use the following commands. For example, for Core:
+
+```sh
+devkit -f 100 net2029:aarphdvpx0b2xyfg56rn0b6m237cjmbkkjre6fcdby
 ```
+
 For ESpace:
+
+```sh
+devkit -f 100 0xAAC38E2c9D8389D0a6df1abB078aC67a2428294a
 ```
-faucet 100 0xAAC38E2c9D8389D0a6df1abB078aC67a2428294a
+
+**NOTE:** If the amount available is 0, you need to wait a few seconds for the mining rewards to reach the account.
+
+To check the balance of the genesis accounts, use:
+
+```sh
+devkit -b
 ```
-The script will recognize the type of address and do a simple transfer or call the internal contract for cross space call.
 
 ## Getting Started
+
 ### Prerequisites
+
 - Docker installed on your machine (if used locally).
-### Run as independent docker image
-If you don't need the devcontainer functionality, but you want to use the devkit setup, you can quickly run a development node with the following command:
+
+### Run as Independent Docker Image
+
+If you don't need the devcontainer functionality but want to use the devkit setup, you can quickly run a development node with the following command:
+
 ```bash
-docker run -it -p 12537:12537 -p 8535:8535 --rm --name devkit spcfxda/conflux-devkit
+docker run -it -p 12537:12537 -p 8535:8535 --rm --name conflux-dev spcfxda/conflux-devkit
 ```
-This command will run the devkit container and expose the necessary ports.
-Once the devkit container is running, you can execute the utility scripts described above with exec:
+
+This command will run the devkit container and expose the necessary ports. Once the devkit container is running, you can execute the utility scripts described above with exec:
+
 ```bash
-docker exec -it devkit genesis_list
-docker exec -it devkit faucet 100 0xf1428162e14ec7a29b50210fbaefdb45050ee4dd
-docker exec -it devkit genesis_espace
+docker exec -it conflux-dev devkit -l
+docker exec -it conflux-dev devkit -f 100 0xf1428162e14ec7a29b50210fbaefdb45050ee4dd
+docker exec -it conflux-dev devkit -e
 ```
+
 ### Run in GitHub Codespaces
+
 You can open this repository in Codespaces using the Codespaces tab under the `CODE` button:
 
-![alt text](README/codespace_tab.png)
+![Codespaces tab](README/codespace_tab.png)
 
 After the build and download of the layers are completed, the environment will be ready to use.
+
 ### Run in VS Code devcontainer
+
 After opening the repository folder with VS Code, a popup will appear in the bottom right corner:
 
-![alt text](README/vscode.png)
+![Reopen in Container](README/vscode.png)
 
-Click on the `Reopen in Container` button. After the build and download of the layers are completed, your VS Code instance will be inside the devcontainer. You can confirm this from the status in the bottom left corner that should look like this:
+Click on the `Reopen in Container` button. After the build and download of the layers are completed, your VS Code instance will be inside the devcontainer. 
 
-![alt text](README/vscode_devcontainer.png)
+You can confirm this from the status in the bottom left corner that should look like this:
+
+![Devcontainer status](README/vscode_devcontainer.png)
 
 ### Customization for VS Code and Codespaces Devcontainer
 
@@ -118,7 +166,7 @@ The main configuration file for the devcontainer is [devcontainer.json](.devcont
             // "BASE_IMAGE": "node:20-slim",
             // "CONFLUX_NODE_ROOT": "/opt/conflux",
             // "USERNAME": "conflux",
-            // "USER_UID": "1001"
+            // "USER_UID": "1001",
             // "USER_GID": "1001"
         },
         "target": "devkit"
@@ -135,36 +183,35 @@ The main configuration file for the devcontainer is [devcontainer.json](.devcont
 
 - **`CONFLUX_NODE_ROOT`**: Sets the destination folder inside the container for all the node data.
 
-- **`USERNAME`**, **`USER_UID`**, **`USER_GID`**: Ensure you set the correct `USERNAME`, `USER_UID`, and `USER_GID` values for your system. The default user is `node`, with `1000:1000` as the UID:GID, which already exists in the base `node:20-slim` image. On Linux systems, the first user typically starts with `1000:1000` UID:GID. If you have multiple users on your system, you may need to change the Docker user to avoid read/write permission issues between the local filesystem and the Docker image.
+- **`USERNAME`**, **`USER_UID`**, **`USER_GID`**: Ensure you set the correct `USERNAME`, `USER_UID`, and `USER_GID` to match your system user and group. This facilitates smoother operation of the Docker container by preventing file permission conflicts.
 
-#### Changing Container Logic and Rebuilding
+### Folder Structure
+
+The repository includes the following directories and files:
 
 To customize the behavior of the devcontainer, modify the files located under the [.devcontainer/conflux](.devcontainer/conflux/) directory.
 
 Here's the structure of the devcontainer:
-
 ```c
 .
 ├── conflux
 │   ├── Dockerfile // Dockerfile divided into three sections: release, devkit, openvscode
 │   ├── templates
-│   │   ├── develop.toml.template     // Node configuration
-│   │   ├── log.yaml.template         // Node log configuration
-│   │   ├── pos_config.yaml.template  // Node PoS configuration
-│   │   └── sh                        // Shell wrappers
-│   │       ├── dev_node.sh.template
-│   │       ├── faucet.sh.template
-│   │       ├── genesis_espace.sh.template
-│   │       └── genesis_list.sh.template
-│   └── utils    // Utility logic written in JavaScript with js-conflux-sdk
+│   │   ├── develop.toml.template    // Conflux Node configuration
+│   │   ├── log.yaml.template        // Conflux Node log configuration
+│   │   ├── pos_config.yaml.template // Conflux Node PoS configuration
+│   │   └── sh
+│   │       └── dev_node.sh.template // Shell wrappers for the Node execution
+│   └── utils     // devkit Utility written with js-conflux-sdk
 │       ├── eslint.config.mjs
-│       ├── faucet.js
-│       ├── genesis_espace.js
-│       ├── genesis_list.js
-│       ├── genesis_secrets.js
 │       ├── package.json
-│       └── package-lock.json
+│       ├── package-lock.json
+│       ├── src
+│       │   ├── index.ts
+│       │   └── utils.ts
+│       └── tsconfig.json
 └── devcontainer.json
+
 ```
 
 After making changes to any file to suit your preferences, rebuild the container by following these steps:

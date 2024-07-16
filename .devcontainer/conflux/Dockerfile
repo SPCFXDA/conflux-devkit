@@ -74,7 +74,7 @@ RUN mkdir -p /workspaces/.local/bin \
     && npm install -g npm@latest \
     && (cd ${CONFLUX_NODE_ROOT}/utils && npm install && npm run build && npm install -g .) \
     && PATH=/workspaces/.local/bin/:$PATH \
-    && devkit -g 
+    && devkit -g
 
 # Expose necessary ports for the Conflux node
 EXPOSE 3000 12535 12537 8545 8546
