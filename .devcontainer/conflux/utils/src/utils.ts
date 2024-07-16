@@ -283,9 +283,7 @@ export async function genesisSecrets(value: string): Promise<void> {
     //   }
     // }
     if (existsSync(genesisSecretsPath)) {
-      console.log(
-        `The file ${genesisSecretsPath} already exists.`,
-      );
+      console.log(`The file ${genesisSecretsPath} already exists.`);
       return;
     }
 
