@@ -3,8 +3,15 @@ import { parse, stringify } from "@iarna/toml"; // For parsing TOML files
 import { readFileSync, writeFileSync, appendFileSync, existsSync } from "fs"; // For file system operations
 import { PrivateKeyAccount, Conflux, Drip, address } from "js-conflux-sdk"; // Conflux SDK for blockchain interactions
 import path = require("path"); // For handling and transforming file paths
-import { http, createPublicClient, defineChain, formatEther, isAddress, Address } from "viem";
-import { privateKeyToAccount } from 'viem/accounts'
+import {
+  http,
+  createPublicClient,
+  defineChain,
+  formatEther,
+  isAddress,
+  Address,
+} from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 
 // Define paths and RPC host from environment variables or default values
 const configPath: string =
@@ -41,7 +48,9 @@ export async function genesisList(): Promise<void> {
           const account = conflux.wallet.addPrivateKey(`0x${privateKey}`);
 
           // Generate eSpace address from the private key
-          const eSpaceAddress: string = privateKeyToAccount(`0x${privateKey}`).address;
+          const eSpaceAddress: string = privateKeyToAccount(
+            `0x${privateKey}`,
+          ).address;
 
           // Log account details
           console.group(`\n######  ACCOUNT ${i}  ######`);
@@ -191,7 +200,9 @@ export async function genesisToeSpace(): Promise<void> {
         // Add account to Conflux wallet using the private key
         const account = conflux.wallet.addPrivateKey(`0x${privateKey}`);
         // Generate eSpace address from the private key
-        const eSpaceAddress: string = privateKeyToAccount(`0x${privateKey}`).address;
+        const eSpaceAddress: string = privateKeyToAccount(
+          `0x${privateKey}`,
+        ).address;
 
         // Send transaction to transfer 1000 CFX to the eSpace address
         const receipt = await crossSpaceCall
@@ -358,7 +369,7 @@ export async function balance(): Promise<void> {
           await conflux.cfx.getBalance(coreAddress),
         ).toCFX();
         const eSpaceBalance = formatEther(
-          await client.getBalance({ address: eSpaceAddress as Address}),
+          await client.getBalance({ address: eSpaceAddress as Address }),
         );
         console.log(
           "Account",
