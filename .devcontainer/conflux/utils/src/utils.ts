@@ -2,9 +2,9 @@
 import { parse, stringify } from "@iarna/toml"; // For parsing TOML files
 import { readFileSync, writeFileSync, appendFileSync, existsSync } from "fs"; // For file system operations
 import { PrivateKeyAccount, Conflux, Drip, address } from "js-conflux-sdk"; // Conflux SDK for blockchain interactions
-import { privateToAddress, isValidAddress } from "ethereumjs-util"; // Utility for converting private key to address
 import path = require("path"); // For handling and transforming file paths
-import { http, createPublicClient, defineChain, formatEther } from "viem";
+import { http, createPublicClient, defineChain, formatEther, isAddress, Address } from "viem";
+import { privateKeyToAccount } from 'viem/accounts'
 
 // Define paths and RPC host from environment variables or default values
 const configPath: string =
@@ -41,7 +41,7 @@ export async function genesisList(): Promise<void> {
           const account = conflux.wallet.addPrivateKey(`0x${privateKey}`);
 
           // Generate eSpace address from the private key
-          const eSpaceAddress: string = `0x${privateToAddress(Buffer.from(privateKey, "hex")).toString("hex")}`;
+          const eSpaceAddress: string = privateKeyToAccount(`0x${privateKey}`).address;
 
           // Log account details
           console.group(`\n######  ACCOUNT ${i}  ######`);
@@ -127,7 +127,7 @@ export async function faucet(options: string[]): Promise<void> {
     }
 
     // Check if the destination address is a valid Ethereum address
-    if (isValidAddress(destinationAddress)) {
+    if (isAddress(destinationAddress)) {
       // Initialize CrossSpaceCall internal contract for cross-space transactions
       const crossSpaceCall = conflux.InternalContract("CrossSpaceCall");
 
@@ -191,7 +191,7 @@ export async function genesisToeSpace(): Promise<void> {
         // Add account to Conflux wallet using the private key
         const account = conflux.wallet.addPrivateKey(`0x${privateKey}`);
         // Generate eSpace address from the private key
-        const eSpaceAddress: string = `0x${privateToAddress(Buffer.from(privateKey, "hex")).toString("hex")}`;
+        const eSpaceAddress: string = privateKeyToAccount(`0x${privateKey}`).address;
 
         // Send transaction to transfer 1000 CFX to the eSpace address
         const receipt = await crossSpaceCall
@@ -352,15 +352,13 @@ export async function balance(): Promise<void> {
         const coreAddress: string = conflux.wallet.addPrivateKey(
           `0x${line}`,
         ).address;
-        const eSpaceAddress: string = privateToAddress(
-          Buffer.from(line, "hex"),
-        ).toString("hex");
+        const eSpaceAddress: string = privateKeyToAccount(`0x${line}`).address;
 
         const coreBalance: string = new Drip(
           await conflux.cfx.getBalance(coreAddress),
         ).toCFX();
         const eSpaceBalance = formatEther(
-          await client.getBalance({ address: `0x${eSpaceAddress}` }),
+          await client.getBalance({ address: eSpaceAddress as Address}),
         );
         console.log(
           "Account",
