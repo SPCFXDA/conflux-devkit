@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, appendFileSync, existsSync } from "fs"; //
 import { PrivateKeyAccount, Conflux, Drip, address } from "js-conflux-sdk"; // Conflux SDK for blockchain interactions
 import { privateToAddress, isValidAddress } from "ethereumjs-util"; // Utility for converting private key to address
 import path = require("path"); // For handling and transforming file paths
-import * as readline from "readline"; // For asking user confirmation
+import { http, createPublicClient, defineChain, formatEther } from "viem";
 
 // Define paths and RPC host from environment variables or default values
 const configPath: string =
@@ -242,20 +242,6 @@ export async function genesisToeSpace(): Promise<void> {
   }
 }
 
-function askConfirmation(question: string): Promise<boolean> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.toLowerCase() === "y" || answer.toLowerCase() === "yes");
-    });
-  });
-}
-
 export async function genesisSecrets(value: string): Promise<void> {
   try {
     let valueInt: number;
@@ -272,20 +258,8 @@ export async function genesisSecrets(value: string): Promise<void> {
       "mining_secret.txt",
     );
 
-    // Check if genesis secrets file exists and ask for confirmation to append new rows
-    // if (existsSync(genesisSecretsPath)) {
-    //   const confirmAppend = await askConfirmation(
-    //     `The file ${genesisSecretsPath} already exists. Do you want to append new rows? (y/n): `,
-    //   );
-    //   if (!confirmAppend) {
-    //     console.log("Appending new rows to genesis secrets file cancelled.");
-    //     return;
-    //   }
-    // }
     if (existsSync(genesisSecretsPath)) {
-      console.log(
-        `The file ${genesisSecretsPath} already exists.`,
-      );
+      console.log(`The file ${genesisSecretsPath} already exists.`);
       return;
     }
 
@@ -336,6 +310,29 @@ export async function genesisSecrets(value: string): Promise<void> {
   }
 }
 
+function viemClient() {
+  const dev_node = defineChain({
+    id: 2030,
+    name: "eSpace",
+    nativeCurrency: {
+      decimals: 18,
+      name: "Conflux",
+      symbol: "CFX",
+    },
+    rpcUrls: {
+      default: {
+        http: ["http://localhost:8545"],
+        webSocket: ["wss://localhost:8546"],
+      },
+    },
+  });
+
+  return createPublicClient({
+    chain: dev_node,
+    transport: http(),
+  });
+}
+
 // Main function to handle the balance logic
 export async function balance(): Promise<void> {
   try {
@@ -345,8 +342,7 @@ export async function balance(): Promise<void> {
     // Validate the connection
     await conflux.cfx.getStatus();
     console.log("Connected to Conflux node");
-    const ethers = require("ethers");
-    const provider = new ethers.providers.JsonRpcProvider();
+    const client = viemClient();
 
     // Read and process the genesis secrets file
     const secrets: string = readFileSync(config.genesis_secrets, "utf-8");
@@ -356,13 +352,15 @@ export async function balance(): Promise<void> {
         const coreAddress: string = conflux.wallet.addPrivateKey(
           `0x${line}`,
         ).address;
-        const eSpaceAddress: string = `0x${privateToAddress(Buffer.from(line, "hex")).toString("hex")}`;
+        const eSpaceAddress: string = privateToAddress(
+          Buffer.from(line, "hex"),
+        ).toString("hex");
 
         const coreBalance: string = new Drip(
           await conflux.cfx.getBalance(coreAddress),
         ).toCFX();
-        const eSpaceBalance = ethers.utils.formatEther(
-          await provider.getBalance(eSpaceAddress),
+        const eSpaceBalance = formatEther(
+          await client.getBalance({ address: `0x${eSpaceAddress}` }),
         );
         console.log(
           "Account",

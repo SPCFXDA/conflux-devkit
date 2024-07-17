@@ -36,7 +36,7 @@ if (options.eSpaceGenesis) {
 }
 
 if (options.generateGenesis) {
-  let value = options.generateGenesis == true ? "5" : options.generateGenesis; 
+  let value = options.generateGenesis == true ? "5" : options.generateGenesis;
   genesisSecrets(value);
 }
 

@@ -69,12 +69,12 @@ USER $USERNAME
 # Set the working directory for the user
 WORKDIR /workspaces/
 
-RUN mkdir -p /workspaces/.local/bin \
-    && npm config set prefix '/workspaces/.local/' \ 
+# Configure npm and install devkit globally
+RUN mkdir -p ~/.local/bin \
+    && npm config set prefix '~/.local/' \ 
     && npm install -g npm@latest \
     && (cd ${CONFLUX_NODE_ROOT}/utils && npm install && npm run build && npm install -g .) \
-    && PATH=/workspaces/.local/bin/:$PATH \
-    && devkit -g
+    && ~/.local/bin/devkit -g
 
 # Expose necessary ports for the Conflux node
 EXPOSE 3000 12535 12537 8545 8546
@@ -82,11 +82,9 @@ EXPOSE 3000 12535 12537 8545 8546
 # Set additional environment variables for the user
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
-    HOME=/workspaces \
     EDITOR=code \
     VISUAL=code \
-    GIT_EDITOR="code --wait" \
-    PATH=/workspaces/.local/bin/:$PATH
+    GIT_EDITOR="code --wait" 
 
 # Set the default command to execute the development node script
 CMD ["dev_node"]
