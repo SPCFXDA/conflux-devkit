@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-
-import { Command } from "commander"; // add this line
+import { Command } from "commander";
 import {
   genesisList,
   faucet,
