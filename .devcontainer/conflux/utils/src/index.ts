@@ -6,6 +6,11 @@ import {
   genesisToeSpace,
   genesisSecrets,
   balance,
+  status,
+  start,
+  stop,
+  logs,
+  stderr,
 } from "./utils";
 const program = new Command();
 
@@ -17,6 +22,11 @@ program
   .option("-f, --faucet [value...]", "Faucet <amount> <address>")
   .option("-e, --eSpaceGenesis", "Transfer from Core genesis address to eSpace")
   .option("-g, --generateGenesis [value]", "Generate genesis addresses")
+  .option("--start", "Start the development node")
+  .option("--stop", "Stop the development node")
+  .option("--status", "Show the node status")
+  .option("--logs", "Show the node logs")
+  .option("--stderr", "Show the errors the node produced in the stderr")
   .parse(process.argv);
 
 const options = program.opts();
@@ -41,6 +51,26 @@ if (options.generateGenesis) {
 
 if (options.balance) {
   balance();
+}
+
+if (options.start) {
+  start();
+}
+
+if (options.stop) {
+  stop();
+}
+
+if (options.status) {
+  status();
+}
+
+if (options.logs) {
+  logs();
+}
+
+if (options.stderr) {
+  stderr();
 }
 
 if (!process.argv.slice(2).length) {

@@ -59,7 +59,12 @@ You can import these accounts into your wallet, or you can add your development 
 To start the independent chain in the devcontainer setup, open the terminal in the VS Code interface (this applies to both locally installed VS Code and the web-based version in Codespaces or OpenVSCode-Server) and use the following command:
 
 ```sh
-dev_node
+devkit --start
+```
+To stop the node:
+
+```sh
+devkit --stop
 ```
 
 ### devkit Utility
@@ -78,6 +83,11 @@ Options:
   -f, --faucet [value...]        Faucet <amount> <address>
   -e, --eSpaceGenesis            Transfer from Core genesis address to eSpace
   -g, --generateGenesis [value]  Generate genesis addresses
+  --start                        Start the development node
+  --stop                         Stop the development node
+  --status                       Show the node status
+  --logs                         Show the node logs
+  --stderr                       Show the errors the node produced in the stderr
   -h, --help                     display help for command
 ```
 
