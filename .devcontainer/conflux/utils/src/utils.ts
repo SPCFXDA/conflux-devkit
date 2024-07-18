@@ -429,14 +429,20 @@ const getPidCmd =
 const lockFilePath = process.env.CONFLUX_NODE_ROOT + "/lock";
 
 export async function start(): Promise<void> {
+  let pid: string | undefined = undefined;
+  let getPid: { stdout: ""; stderr: "" };
   try {
     // Check if lock file exists
     try {
-      await promises.access(lockFilePath);
+      pid = await promises.readFile(lockFilePath, "utf8");
+    } catch {
+      getPid = await execAsync(getPidCmd);
+      pid = getPid.stdout.trim();
+    }
+
+    if (pid) {
       console.log("Node is already running, not starting again.");
       return;
-    } catch {
-      // Lock file does not exist, proceed to start the node
     }
 
     const cmd =
@@ -445,8 +451,8 @@ export async function start(): Promise<void> {
     console.log(startNode.stdout.trim(), startNode.stderr.trim());
 
     // Get the PID of the started node
-    const getPid = await execAsync(getPidCmd);
-    const pid = getPid.stdout.trim();
+    getPid = await execAsync(getPidCmd);
+    pid = getPid.stdout.trim();
     console.log(`Node started with PID: ${pid}`);
 
     // Save the PID to the lock file
