@@ -1,6 +1,12 @@
 // Import required modules
 import { parse, stringify } from "@iarna/toml"; // For parsing TOML files
-import { readFileSync, writeFileSync, appendFileSync, existsSync } from "fs"; // For file system operations
+import {
+  readFileSync,
+  writeFileSync,
+  appendFileSync,
+  existsSync,
+  promises,
+} from "fs"; // For file system operations
 import { PrivateKeyAccount, Conflux, Drip, address } from "js-conflux-sdk"; // Conflux SDK for blockchain interactions
 import path = require("path"); // For handling and transforming file paths
 import {
@@ -12,6 +18,11 @@ import {
   Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { promisify } from "util";
+import TailFile from "@logdna/tail-file";
+import yaml from "js-yaml";
+
+const exec = promisify(require("child_process").exec);
 
 // Define paths and RPC host from environment variables or default values
 const configPath: string =
@@ -173,7 +184,7 @@ export async function faucet(options: string[]): Promise<void> {
     // Handle connection error
     if (error.errno === -111) {
       console.warn(
-        `Failed to connect to ${error.address}:${error.port}. Have you started the local node with the "dev_node" command?`,
+        `Failed to connect to ${error.address}:${error.port}. Have you started the local node with 'devkit --start' command?`,
       );
     } else {
       console.error("An error occurred:", error.message);
@@ -244,7 +255,7 @@ export async function genesisToeSpace(): Promise<void> {
     // Handle errors
     if (error.errno === -111) {
       console.warn(
-        `Failed to connect to ${error.address}:${error.port}. Have you started the local node with the "dev_node" command?`,
+        `Failed to connect to ${error.address}:${error.port}. Have you started the local node with 'devkit --start' command?`,
       );
     } else {
       console.error("An error occurred:", error.message);
@@ -384,6 +395,138 @@ export async function balance(): Promise<void> {
     conflux.close();
   } catch (error: any) {
     console.error("An error occurred:", error.message);
+    process.exit(1);
+  }
+}
+
+// Main function to handle the balance logic
+export async function status(): Promise<void> {
+  try {
+    // Initialize Conflux instance with RPC URL and network ID from config
+    const conflux = initConflux();
+
+    // Validate the connection
+    const status = await conflux.cfx.getStatus();
+    console.log(status);
+    conflux.close();
+  } catch (error: any) {
+    // Handle errors
+    if (error.errno === -111) {
+      console.warn(
+        `Failed to connect to ${error.address}:${error.port}. the node is not running or starting up...`,
+      );
+    } else {
+      console.error("An error occurred:", error.message);
+    }
+    process.exit(1);
+  }
+}
+
+const execAsync = promisify(exec);
+
+const getPidCmd =
+  "ls -l /proc/*/exe 2>/dev/null | grep '/usr/bin/conflux' | awk '{print $9}' | cut -d'/' -f3";
+const lockFilePath = process.env.CONFLUX_NODE_ROOT + "/lock";
+
+export async function start(): Promise<void> {
+  try {
+    // Check if lock file exists
+    try {
+      await promises.access(lockFilePath);
+      console.log("Node is already running, not starting again.");
+      return;
+    } catch {
+      // Lock file does not exist, proceed to start the node
+    }
+
+    const cmd =
+      "ulimit -n 10000 && export RUST_BACKTRACE=1 && conflux --config $CONFIG_PATH 2> $CONFLUX_NODE_ROOT/log/stderr.txt 1> /dev/null&";
+    const startNode = await execAsync(cmd);
+    console.log(startNode.stdout.trim(), startNode.stderr.trim());
+
+    // Get the PID of the started node
+    const getPid = await execAsync(getPidCmd);
+    const pid = getPid.stdout.trim();
+    console.log(`Node started with PID: ${pid}`);
+
+    // Save the PID to the lock file
+    await promises.writeFile(lockFilePath, pid, "utf8");
+  } catch (error: any) {
+    console.error("An error occurred:", error.message);
+    process.exit(1);
+  }
+}
+
+export async function stop(): Promise<void> {
+  try {
+    let pid: string;
+
+    // Try to read the PID from the lock file
+    try {
+      pid = await promises.readFile(lockFilePath, "utf8");
+      console.log(`Found PID in lock file: ${pid}`);
+    } catch {
+      console.log("Lock file not found, searching for PID...");
+
+      // If lock file does not exist, get the PID using the command
+      const getPid = await execAsync(getPidCmd);
+      pid = getPid.stdout.trim();
+
+      if (!pid) {
+        console.log("PID not found, is the node running?");
+        return;
+      }
+      console.log(`Found PID using command: ${pid}`);
+    }
+
+    // Kill the process
+    const kill = await execAsync(`kill ${pid}`);
+    console.log(kill.stdout.trim(), kill.stderr.trim());
+
+    // Remove the lock file
+    await promises.unlink(lockFilePath);
+    console.log("Node stopped");
+  } catch (error: any) {
+    console.error("An error occurred:", error.message);
+    process.exit(1);
+  }
+}
+
+export async function logs(): Promise<void> {
+  const logConfigString: string = readFileSync(
+    process.env.CONFLUX_NODE_ROOT + "/log.yaml",
+    "utf-8",
+  );
+  const logConfig: any = yaml.load(logConfigString);
+  const tail = new TailFile(logConfig.appenders.logfile.path, {
+    encoding: "utf8",
+  })
+    .on("data", (chunk) => {
+      console.log(`Recieved a utf8 character chunk: ${chunk}`);
+    })
+    .on("tail_error", (err) => {
+      console.error("TailFile had an error!", err);
+    })
+    .on("error", (err) => {
+      console.error("A TailFile stream error was likely encountered", err);
+    })
+    .start()
+    .catch((err) => {
+      console.error("Cannot start.  Does the file exist?", err);
+    });
+}
+
+export async function stderr(): Promise<void> {
+  try {
+    const filePath = process.env.CONFLUX_NODE_ROOT + "/log/stderr.txt";
+    const data = await promises.readFile(filePath, "utf8");
+    if (data.trim().length === 0) {
+      console.log("No content to display.");
+      return;
+    }
+    process.stdout.write(data);
+  } catch (error: any) {
+    console.error(`Error reading file`, error.message);
     process.exit(1);
   }
 }
