@@ -21,6 +21,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { promisify } from "util";
 import TailFile from "@logdna/tail-file";
 import yaml from "js-yaml";
+import { program } from "commander";
 
 const exec = promisify(require("child_process").exec);
 
@@ -40,6 +41,10 @@ function initConflux(): Conflux {
 
 function isNumeric(value: string): boolean {
   return !isNaN(parseFloat(value)) && isFinite(parseFloat(value));
+}
+
+async function getBalance(conflux: Conflux, address: string) {
+  return new Drip(await conflux.cfx.getBalance(address)).toCFX();
 }
 
 // Main function to list genesis accounts
@@ -103,9 +108,7 @@ export async function faucet(options: string[]): Promise<void> {
 
     // Add miner private key to Conflux wallet and get balance
     const miner = conflux.wallet.addPrivateKey(secretString);
-    const balance: string = new Drip(
-      await conflux.cfx.getBalance(miner.address),
-    ).toCFX();
+    const balance: string = await getBalance(conflux, miner.address);
     console.log(`Faucet balance is ${balance} CFX`);
 
     // Exit if no arguments are provided
@@ -193,7 +196,7 @@ export async function faucet(options: string[]): Promise<void> {
   }
 }
 
-export async function genesisToeSpace(): Promise<void> {
+export async function genesisToeSpace(amount: string): Promise<void> {
   try {
     // Initialize Conflux instance with RPC URL and network ID from config
     const conflux = initConflux();
@@ -211,6 +214,11 @@ export async function genesisToeSpace(): Promise<void> {
         // Add account to Conflux wallet using the private key
         const account = conflux.wallet.addPrivateKey(`0x${privateKey}`);
         // Generate eSpace address from the private key
+        const balance: string = await getBalance(conflux, account.address);
+        if (Number(balance) < Number(amount)) {
+          console.log("Insufficent balance");
+          return;
+        }
         const eSpaceAddress: string = privateKeyToAccount(
           `0x${privateKey}`,
         ).address;
@@ -220,7 +228,7 @@ export async function genesisToeSpace(): Promise<void> {
           .transferEVM(eSpaceAddress)
           .sendTransaction({
             from: account,
-            value: Drip.fromCFX(1000), // Transfer 1000 CFX
+            value: Drip.fromCFX(Number(amount)), // Transfer 1000 CFX
           })
           .executed();
 
@@ -375,10 +383,7 @@ export async function balance(): Promise<void> {
           `0x${line}`,
         ).address;
         const eSpaceAddress: string = privateKeyToAccount(`0x${line}`).address;
-
-        const coreBalance: string = new Drip(
-          await conflux.cfx.getBalance(coreAddress),
-        ).toCFX();
+        const coreBalance: string = await getBalance(conflux, coreAddress);
         const eSpaceBalance = formatEther(
           await client.getBalance({ address: eSpaceAddress as Address }),
         );
@@ -401,62 +406,71 @@ export async function balance(): Promise<void> {
 
 // Main function to handle the balance logic
 export async function status(): Promise<void> {
-  try {
-    // Initialize Conflux instance with RPC URL and network ID from config
-    const conflux = initConflux();
+  let msg = "";
+  // Returns a Promise that resolves after "ms" Milliseconds
+  const timer = (ms: number | undefined) =>
+    new Promise((res) => setTimeout(res, ms));
+  async function checkStatus() {
+    for (var i = 1; i <= 5; i++) {
+      try {
+        // Initialize Conflux instance with RPC URL and network ID from config
+        const conflux = initConflux();
 
-    // Validate the connection
-    const status = await conflux.cfx.getStatus();
-    console.log(status);
-    conflux.close();
-  } catch (error: any) {
-    // Handle errors
-    if (error.errno === -111) {
-      console.warn(
-        `Failed to connect to ${error.address}:${error.port}. the node is not running or starting up...`,
-      );
-    } else {
-      console.error("An error occurred:", error.message);
+        // Validate the connection
+        console.log(await conflux.cfx.getStatus());
+        conflux.close();
+        return;
+      } catch (error: any) {
+        // Handle errors
+        if (error.errno === -111) {
+          msg = `Failed to connect to ${error.address}:${error.port}. the node is not running or starting up...`;
+        } else {
+          console.error("An error occurred:", error.message);
+          process.exit(1);
+        }
+      }
+      console.log(`[...]`);
+      await timer(3000); // then the created Promise can be awaited
     }
-    process.exit(1);
+    console.log(msg);
+    process.exit(0);
   }
+  await checkStatus();
 }
 
 const execAsync = promisify(exec);
-
+// get pid without 'ps' system utility
 const getPidCmd =
   "ls -l /proc/*/exe 2>/dev/null | grep '/usr/bin/conflux' | awk '{print $9}' | cut -d'/' -f3";
-const lockFilePath = process.env.CONFLUX_NODE_ROOT + "/lock";
+
+const startNodeCmd =
+  "ulimit -n 10000 && export RUST_BACKTRACE=1 && conflux --config $CONFIG_PATH 2> $CONFLUX_NODE_ROOT/log/stderr.txt& 1> /dev/null";
+
+async function execCmd(cmd: string) {
+  const execOut = await execAsync(getPidCmd);
+  const std = { out: execOut.stdout.trim(), err: execOut.stderr.trim() };
+  if (std.err) {
+    console.error(std.err);
+    process.exit(1);
+  }
+  return std.out;
+}
 
 export async function start(): Promise<void> {
-  let pid: string | undefined = undefined;
-  let getPid: { stdout: ""; stderr: "" };
   try {
-    // Check if lock file exists
-    try {
-      pid = await promises.readFile(lockFilePath, "utf8");
-    } catch {
-      getPid = await execAsync(getPidCmd);
-      pid = getPid.stdout.trim();
-    }
-
+    //
+    const pid = await execCmd(getPidCmd);
     if (pid) {
-      console.log("Node is already running, not starting again.");
+      console.log(`Node is already running (PID: ${pid}), not starting again.`);
       return;
     }
+    console.log("Node starting...");
+    execAsync(startNodeCmd);
 
-    const cmd =
-      "ulimit -n 10000 && export RUST_BACKTRACE=1 && conflux --config $CONFIG_PATH 2> $CONFLUX_NODE_ROOT/log/stderr.txt 1> /dev/null&";
-    const startNode = await execAsync(cmd);
-    console.log(startNode.stdout.trim(), startNode.stderr.trim());
-
-    // Get the PID of the started node
-    getPid = await execAsync(getPidCmd);
-    pid = getPid.stdout.trim();
-    console.log(`Node started with PID: ${pid}`);
-
-    // Save the PID to the lock file
-    await promises.writeFile(lockFilePath, pid, "utf8");
+    console.log(`Node started with PID: ${await execCmd(getPidCmd)}`);
+    console.log("bootstrap...");
+    await status();
+    console.log("Node started!");
   } catch (error: any) {
     console.error("An error occurred:", error.message);
     process.exit(1);
@@ -468,29 +482,15 @@ export async function stop(): Promise<void> {
     let pid: string;
 
     // Try to read the PID from the lock file
-    try {
-      pid = await promises.readFile(lockFilePath, "utf8");
-      console.log(`Found PID in lock file: ${pid}`);
-    } catch {
-      console.log("Lock file not found, searching for PID...");
-
-      // If lock file does not exist, get the PID using the command
-      const getPid = await execAsync(getPidCmd);
-      pid = getPid.stdout.trim();
-
-      if (!pid) {
-        console.log("PID not found, is the node running?");
-        return;
-      }
-      console.log(`Found PID using command: ${pid}`);
+    pid = await execCmd(getPidCmd);
+    if (!pid) {
+      console.log("PID not found, is the node running?");
+      return;
     }
+    console.log(`Found PID: ${pid}`);
 
     // Kill the process
-    const kill = await execAsync(`kill ${pid}`);
-    console.log(kill.stdout.trim(), kill.stderr.trim());
-
-    // Remove the lock file
-    await promises.unlink(lockFilePath);
+    await execAsync(`kill ${pid}`);
     console.log("Node stopped");
   } catch (error: any) {
     console.error("An error occurred:", error.message);
@@ -503,22 +503,36 @@ export async function logs(): Promise<void> {
     process.env.CONFLUX_NODE_ROOT + "/log.yaml",
     "utf-8",
   );
-  const logConfig: any = yaml.load(logConfigString);
-  const tail = new TailFile(logConfig.appenders.logfile.path, {
-    encoding: "utf8",
-  })
+  type logConfType = { appenders: { logfile: { path: string } } };
+  const logConfig = yaml.load(logConfigString) as logConfType;
+  let position: number; // Can be used to resume the last position from a new instance
+
+  const tail = new TailFile(logConfig.appenders.logfile.path);
+
+  process.on("SIGINT", () => {
+    tail
+      .quit()
+      .then(() => {
+        console.log(`The last read file position was: ${position}`);
+      })
+      .catch((err) => {
+        process.nextTick(() => {
+          console.error("Error during TailFile shutdown", err);
+        });
+      });
+  });
+
+  tail
+    .on("flush", ({ lastReadPosition }) => {
+      position = lastReadPosition;
+    })
     .on("data", (chunk) => {
-      console.log(`Recieved a utf8 character chunk: ${chunk}`);
-    })
-    .on("tail_error", (err) => {
-      console.error("TailFile had an error!", err);
-    })
-    .on("error", (err) => {
-      console.error("A TailFile stream error was likely encountered", err);
+      console.log(chunk.toString());
     })
     .start()
     .catch((err) => {
       console.error("Cannot start.  Does the file exist?", err);
+      throw err;
     });
 }
 

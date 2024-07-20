@@ -44,8 +44,7 @@ ENV CONFIG_PATH=${CONFIG_PATH}
 RUN cat /tmp/log.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/log.yaml && \
     cat /tmp/develop.toml.template | envsubst > ${CONFIG_PATH} && \
     (cd ${CONFLUX_NODE_ROOT}/pos_config && pos-genesis-tool random --initial-seed=0000000000000000000000000000000000000000000000000000000000000000 --num-validator=1 --num-genesis-validator=1 --chain-id=${CHAIN_ID}) && \
-    export WAYPOINT=$(cat ${CONFLUX_NODE_ROOT}/pos_config/waypoint_config) && cat /tmp/pos_config.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/pos_config/pos_config.yaml && \
-    cat /tmp/sh/dev_node.sh.template | envsubst > /usr/bin/dev_node && chmod +x /usr/bin/dev_node
+    export WAYPOINT=$(cat ${CONFLUX_NODE_ROOT}/pos_config/waypoint_config) && cat /tmp/pos_config.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/pos_config/pos_config.yaml
 
 # Define build arguments for user creation
 ARG USERNAME=node
@@ -84,10 +83,11 @@ ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     EDITOR=code \
     VISUAL=code \
-    GIT_EDITOR="code --wait" 
+    GIT_EDITOR="code --wait" \
+    PATH=$PATH:/home/${USERNAME}/.local/bin:
 
 # Set the default command to execute the development node script
-CMD ["dev_node"]
+ENTRYPOINT ["/bin/bash","-c","devkit --start --logs"]
 
 # Stage 3: Use the devkit image as the base for setting up OpenVSCode server
 FROM devkit AS openvscode
