@@ -1,9 +1,9 @@
 {
-  "name": "scripts",
+  "name": "devkit",
   "version": "1.0.0",
   "main": "dist/index.js",
   "bin": {
-    "devkit": "./dist/index.js"
+    "devkit": "dist/cli.js"
   },
   "scripts": {
     "build": "npx tsc",
