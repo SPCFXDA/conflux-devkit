@@ -53,6 +53,7 @@ export class SetupTask extends BaseTask {
   evmChainID: number;
   secretsPath: fs.PathLike;
   minerSecretPath: fs.PathLike;
+  templatesPath: fs.PathLike;
   secrets: string[];
   constructor() {
     super();
@@ -61,6 +62,7 @@ export class SetupTask extends BaseTask {
     this.chainID = Number(process.env.CHAIN_ID);
     this.evmChainID = Number(process.env.EVM_CHAIN_ID);
     this.secretsPath = process.env.SECRETS_PATH as fs.PathLike;
+    this.templatesPath = process.env.TEMPLATES_PATH as fs.PathLike;
     this.minerSecretPath = "";
     this.secrets = [];
   }
@@ -153,7 +155,7 @@ export class SetupTask extends BaseTask {
         `mkdir -p ${posPath} && (cd ${posPath} && pos-genesis-tool random --initial-seed=0000000000000000000000000000000000000000000000000000000000000000 --num-validator=1 --num-genesis-validator=1 --chain-id=${this.chainID})`,
       );
       await this.exec(
-        `export WAYPOINT=$(cat ${posPath}/waypoint_config) && cat /tmp/pos_config.yaml.template | envsubst > ${posPath}/pos_config.yaml`,
+        `export WAYPOINT=$(cat ${posPath}/waypoint_config) && cat ${this.templatesPath}/pos_config.yaml.template | envsubst > ${posPath}/pos_config.yaml`,
       );
     }
   }
@@ -162,14 +164,14 @@ export class SetupTask extends BaseTask {
     if (!fs.existsSync(logPath)) {
       fs.mkdirSync(logPath);
       await this.exec(
-        `cat /tmp/log.yaml.template | envsubst > ${this.rootPath}/log.yaml`,
+        `cat ${this.templatesPath}/log.yaml.template | envsubst > ${this.rootPath}/log.yaml`,
       );
     }
   }
   async generateConfig() {
     if (!fs.existsSync(this.configPath)) {
       await this.exec(
-        `cat /tmp/develop.toml.template | envsubst > ${this.configPath}`,
+        `cat ${this.templatesPath}/develop.toml.template | envsubst > ${this.configPath}`,
       );
     }
     this.config = parse(fs.readFileSync(this.configPath, "utf-8"));
@@ -211,7 +213,7 @@ export class NodeTask extends SetupTask {
     const pid = await this.getPid();
     if (pid) {
       console.log(`Node is already running (PID: ${pid}), not starting again.`);
-      return;
+      process.exit(0);
     }
     console.log("Node starting...");
     this.exec(this.startNodeCmd);
