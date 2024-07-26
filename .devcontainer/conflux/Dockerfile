@@ -11,6 +11,7 @@ FROM ${BASE_IMAGE} AS devkit
 # Define build arguments for Conflux node configuration
 ARG CONFLUX_NODE_ROOT="/opt/conflux"
 ARG CONFIG_PATH="${CONFLUX_NODE_ROOT}/develop.toml"
+ARG SECRETS_PATH="${CONFLUX_NODE_ROOT}/genesis_secrets.txt"
 
 # Install necessary dependencies and clean up apt lists to reduce image size
 RUN apt-get update && apt-get install -y --no-install-recommends \ 
@@ -28,24 +29,19 @@ COPY --from=release /bin/cfx-gen-dot /bin/cfx-gen-dot
 COPY --from=release /bin/cfxstore /bin/cfxstore
 
 # Create necessary directories for Conflux node operation
-RUN mkdir -p ${CONFLUX_NODE_ROOT} ${CONFLUX_NODE_ROOT}/log ${CONFLUX_NODE_ROOT}/pos_config
-
-# Add utility scripts and templates to the image
-ADD utils ${CONFLUX_NODE_ROOT}/utils
-ADD templates /tmp/
+RUN mkdir -p ${CONFLUX_NODE_ROOT}
 
 # Set environment variables for chain IDs and configuration paths
 ENV CHAIN_ID=2029
 ENV EVM_CHAIN_ID=2030
 ENV CONFLUX_NODE_ROOT=${CONFLUX_NODE_ROOT}
 ENV CONFIG_PATH=${CONFIG_PATH}
+ENV SECRETS_PATH=${SECRETS_PATH}
+ENV DEVKIT_PATH="/opt/devkit"
 
-# Generate configuration files using environment variables and templates
-RUN cat /tmp/log.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/log.yaml && \
-    cat /tmp/develop.toml.template | envsubst > ${CONFIG_PATH} && \
-    (cd ${CONFLUX_NODE_ROOT}/pos_config && pos-genesis-tool random --initial-seed=0000000000000000000000000000000000000000000000000000000000000000 --num-validator=1 --num-genesis-validator=1 --chain-id=${CHAIN_ID}) && \
-    export WAYPOINT=$(cat ${CONFLUX_NODE_ROOT}/pos_config/waypoint_config) && cat /tmp/pos_config.yaml.template | envsubst > ${CONFLUX_NODE_ROOT}/pos_config/pos_config.yaml && \
-    cat /tmp/sh/dev_node.sh.template | envsubst > /usr/bin/dev_node && chmod +x /usr/bin/dev_node
+# Add utility scripts and templates to the image
+ADD devkit ${DEVKIT_PATH}
+ADD templates /tmp/
 
 # Define build arguments for user creation
 ARG USERNAME=node
@@ -61,7 +57,8 @@ RUN echo "$USERNAME ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
 # Change ownership of the Conflux node directory to the created user
-RUN chown -R ${USER_UID}:${USER_GID} ${CONFLUX_NODE_ROOT}
+RUN chown -R ${USER_UID}:${USER_GID} ${CONFLUX_NODE_ROOT} \
+    && chown -R ${USER_UID}:${USER_GID} ${DEVKIT_PATH}
 
 # Switch to the created user context
 USER $USERNAME  
@@ -73,8 +70,7 @@ WORKDIR /workspaces/
 RUN mkdir -p ~/.local/bin \
     && npm config set prefix '~/.local/' \ 
     && npm install -g npm@latest \
-    && (cd ${CONFLUX_NODE_ROOT}/utils && npm install && npm run build && npm install -g .) \
-    && ~/.local/bin/devkit -g
+    && (cd ${DEVKIT_PATH} && npm install && npm run build && npm install -g .)
 
 # Expose necessary ports for the Conflux node
 EXPOSE 3000 12535 12537 8545 8546
@@ -84,10 +80,11 @@ ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     EDITOR=code \
     VISUAL=code \
-    GIT_EDITOR="code --wait" 
+    GIT_EDITOR="code --wait" \
+    PATH=$PATH:/home/${USERNAME}/.local/bin:
 
 # Set the default command to execute the development node script
-CMD ["dev_node"]
+ENTRYPOINT ["/bin/bash","-c","devkit --start --logs"]
 
 # Stage 3: Use the devkit image as the base for setting up OpenVSCode server
 FROM devkit AS openvscode

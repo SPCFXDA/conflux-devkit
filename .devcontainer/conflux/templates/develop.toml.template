@@ -46,7 +46,7 @@ mode = "dev"
 # Otherwise, blocks are automatically generated every ``dev_block_interval_ms'' ms.
 #
 dev_block_interval_ms = 250
-genesis_secrets = '$CONFLUX_NODE_ROOT/genesis_secrets.txt'
+genesis_secrets = '$SECRETS_PATH'
 
 # ----------------- Pos Configuration -----------------
 
