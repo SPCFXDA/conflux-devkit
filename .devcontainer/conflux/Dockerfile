@@ -71,7 +71,7 @@ WORKDIR /workspaces/
 RUN mkdir -p ~/.local/bin \
     && npm config set prefix '~/.local/' \ 
     && npm install -g npm@latest \
-    && (cd ${DEVKIT_PATH} && npm install && npm run build && npm install -g .) \
+    && (cd ${DEVKIT_PATH} && npm install && npm run build && npm install -g .)
 
 
 # Expose necessary ports for the Conflux node
