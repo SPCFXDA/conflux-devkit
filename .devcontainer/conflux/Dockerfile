@@ -12,6 +12,7 @@ FROM ${BASE_IMAGE} AS devkit
 ARG CONFLUX_NODE_ROOT="/opt/conflux"
 ARG CONFIG_PATH="${CONFLUX_NODE_ROOT}/develop.toml"
 ARG SECRETS_PATH="${CONFLUX_NODE_ROOT}/genesis_secrets.txt"
+ENV TEMPLATES_PATH="/opt/tempaltes"
 
 # Install necessary dependencies and clean up apt lists to reduce image size
 RUN apt-get update && apt-get install -y --no-install-recommends \ 
@@ -29,7 +30,7 @@ COPY --from=release /bin/cfx-gen-dot /bin/cfx-gen-dot
 COPY --from=release /bin/cfxstore /bin/cfxstore
 
 # Create necessary directories for Conflux node operation
-RUN mkdir -p ${CONFLUX_NODE_ROOT}
+RUN mkdir -p ${CONFLUX_NODE_ROOT} ${TEMPLATES_PATH}
 
 # Set environment variables for chain IDs and configuration paths
 ENV CHAIN_ID=2029
@@ -41,7 +42,7 @@ ENV DEVKIT_PATH="/opt/devkit"
 
 # Add utility scripts and templates to the image
 ADD devkit ${DEVKIT_PATH}
-ADD templates /tmp/
+ADD templates ${TEMPLATES_PATH}
 
 # Define build arguments for user creation
 ARG USERNAME=node
@@ -70,7 +71,8 @@ WORKDIR /workspaces/
 RUN mkdir -p ~/.local/bin \
     && npm config set prefix '~/.local/' \ 
     && npm install -g npm@latest \
-    && (cd ${DEVKIT_PATH} && npm install && npm run build && npm install -g .)
+    && (cd ${DEVKIT_PATH} && npm install && npm run build && npm install -g .) \
+
 
 # Expose necessary ports for the Conflux node
 EXPOSE 3000 12535 12537 8545 8546
