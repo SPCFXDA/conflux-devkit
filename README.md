@@ -27,7 +27,7 @@ There are several ways to reuse the code from this repository. We recommend the 
 
 ## What is Available in This Dev Environment
 
-Using the [Dockerfile](.devcontainer/conflux/Dockerfile) and [develop.toml.template](.devcontainer/conflux/templates/develop.toml.template), the Docker instance will create an [independent chain](https://doc.confluxnetwork.org/docs/general/run-a-node/advanced-topics/running-independent-chain).
+Using the [Dockerfile](.devcontainer/conflux/Dockerfile) and the [devkit](.devcontainer/conflux/devkit) utility, the Docker instance will create an [independent chain](https://doc.confluxnetwork.org/docs/general/run-a-node/advanced-topics/running-independent-chain).
 
 The independent chain will be reachable with the following RPC endpoints, which can be added to [Fluent](https://fluentwallet.com/) (Core and eSpace) or [Metamask](https://metamask.io/) (eSpace) wallet:
 
@@ -69,7 +69,7 @@ devkit --stop
 
 ### devkit Utility
 
-Once the independent chain is running, you can open another terminal and use the `devkit` utility for various operations.
+Once the independent chain is running, you can use the `devkit` utility for various operations.
 
 ```
 Usage: devkit [options]
@@ -130,15 +130,15 @@ devkit -b
 If you don't need the devcontainer functionality but want to use the devkit setup, you can quickly run a development node with the following command:
 
 ```bash
-docker run -it -p 12537:12537 -p 8535:8535 --rm --name conflux-dev spcfxda/conflux-devkit
+docker run -it -p 12537:12537 -p 8535:8535 --rm --name conflux-dev spcfxda/conflux-devkit:latest
 ```
 
 This command will run the devkit container and expose the necessary ports. Once the devkit container is running, you can execute the utility scripts described above with exec:
 
 ```bash
 docker exec -it conflux-dev devkit -l
-docker exec -it conflux-dev devkit -f 100 0xf1428162e14ec7a29b50210fbaefdb45050ee4dd
 docker exec -it conflux-dev devkit -e
+docker exec -it conflux-dev devkit -f 100 0xf1428162e14ec7a29b50210fbaefdb45050ee4dd
 ```
 
 ### Run in GitHub Codespaces
@@ -202,24 +202,31 @@ The repository includes the following directories and files:
 To customize the behavior of the devcontainer, modify the files located under the [.devcontainer/conflux](.devcontainer/conflux/) directory.
 
 Here's the structure of the devcontainer:
+
 ```c
 .
 ├── conflux
-│   ├── Dockerfile // Dockerfile divided into three sections: release, devkit, openvscode
-│   ├── templates
-│   │   ├── develop.toml.template    // Conflux Node configuration
-│   │   ├── log.yaml.template        // Conflux Node log configuration
-│   │   ├── pos_config.yaml.template // Conflux Node PoS configuration
-│   │   └── sh
-│   │       └── dev_node.sh.template // Shell wrappers for the Node execution
-│   └── utils     // devkit Utility written with js-conflux-sdk
-│       ├── eslint.config.mjs
-│       ├── package.json
-│       ├── package-lock.json
-│       ├── src
-│       │   ├── index.ts
-│       │   └── utils.ts
-│       └── tsconfig.json
+│   ├── devkit // devkit Utility written with js-conflux-sdk and viem
+│   │   ├── eslint.config.mjs
+│   │   ├── package.json
+│   │   ├── package-lock.json
+│   │   ├── src
+│   │   │   ├── cli.ts
+│   │   │   ├── config // node configuration template
+│   │   │   │   ├── develop.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── log.ts
+│   │   │   │   ├── pos_config.ts
+│   │   │   │   └── types.ts
+│   │   │   ├── index.ts
+│   │   │   └── tasks // devkit tasks logic
+│   │   │       ├── balance.ts
+│   │   │       ├── faucet.ts
+│   │   │       ├── genesisList.ts
+│   │   │       ├── genesisToeSpace.ts
+│   │   │       └── task.ts
+│   │   └── tsconfig.json
+│   └── Dockerfile // Dockerfile divided into three sections: release, devkit, openvscode
 └── devcontainer.json
 
 ```
