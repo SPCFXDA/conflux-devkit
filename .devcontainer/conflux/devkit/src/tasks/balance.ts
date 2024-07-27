@@ -1,6 +1,7 @@
-import { ClientTask } from "./task";
-import { formatEther, Address } from "viem";
+import { Address, formatEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+
+import { ClientTask } from "./task";
 
 export class Balance extends ClientTask {
   async execute(options: any) {
@@ -35,3 +36,5 @@ export class Balance extends ClientTask {
     this.coreClient!.close();
   }
 }
+
+export const balance = new Balance();

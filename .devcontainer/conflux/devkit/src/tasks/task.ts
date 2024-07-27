@@ -1,14 +1,22 @@
 // Import required modules
-import { Conflux, Drip } from "js-conflux-sdk"; // Conflux SDK for blockchain interactions
-import { http, createPublicClient, defineChain } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { promisify } from "util";
-import TailFile from "@logdna/tail-file";
+import * as fs from "fs";
+import { Conflux, Drip } from "js-conflux-sdk";
+// For file system operations
+import { PrivateKeyAccount } from "js-conflux-sdk";
 import yaml from "js-yaml";
-import * as fs from "fs"; // For file system operations
-import { PrivateKeyAccount } from "js-conflux-sdk"; // Conflux SDK for blockchain interactions
+import { promisify } from "util";
+// Conflux SDK for blockchain interactions
+import { createPublicClient, defineChain, http } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+
+import { parse, stringify } from "@iarna/toml";
+import TailFile from "@logdna/tail-file";
+
+import { develop, logConfig, posConfig } from "../config";
+
+// Conflux SDK for blockchain interactions
 import path = require("path");
-import { parse, stringify } from "@iarna/toml"; // For parsing TOML files
+// For parsing TOML files
 
 export class BaseTask {
   exec: any = promisify(require("child_process").exec);
@@ -73,7 +81,7 @@ export class SetupTask extends BaseTask {
       await this.generateLogConfig();
       await this.generatePosConfig();
       await this.generateMinerSecrets();
-      await this.generateSecrets();
+      this.generateSecrets();
     } catch (error: any) {
       console.error("An error occurred during initialization:", error.message);
       process.exit(1);
@@ -81,8 +89,8 @@ export class SetupTask extends BaseTask {
   }
 
   async run(options: any) {
+    this.setup();
     try {
-      await this.setup();
       return await this.execute(options);
     } catch (error: any) {
       if (error.errno === -111) {
@@ -148,33 +156,42 @@ export class SetupTask extends BaseTask {
   }
 
   async generatePosConfig() {
-    const posPath = `${this.rootPath}/pos_config`;
+    const posPath = path.join(this.rootPath as string, "pos_config");
+
     if (!fs.existsSync(posPath)) {
       fs.mkdirSync(posPath);
       await this.exec(
-        `mkdir -p ${posPath} && (cd ${posPath} && pos-genesis-tool random --initial-seed=0000000000000000000000000000000000000000000000000000000000000000 --num-validator=1 --num-genesis-validator=1 --chain-id=${this.chainID})`,
+        `(cd ${posPath} && pos-genesis-tool random --initial-seed=0000000000000000000000000000000000000000000000000000000000000000 --num-validator=1 --num-genesis-validator=1 --chain-id=${this.chainID})`,
       );
-      await this.exec(
-        `export WAYPOINT=$(cat ${posPath}/waypoint_config) && cat ${this.templatesPath}/pos_config.yaml.template | envsubst > ${posPath}/pos_config.yaml`,
+      let pos = posConfig;
+      pos.base.waypoint.from_config = fs
+        .readFileSync(path.join(posPath, "waypoint_config"), "utf-8")
+        .trim();
+      fs.writeFileSync(
+        path.join(posPath, "pos_config.yaml"),
+        yaml.dump(pos),
+        "utf8",
       );
     }
   }
   async generateLogConfig() {
-    const logPath = `${this.rootPath}/log`;
+    const logPath = path.join(this.rootPath as string, "log");
     if (!fs.existsSync(logPath)) {
       fs.mkdirSync(logPath);
-      await this.exec(
-        `cat ${this.templatesPath}/log.yaml.template | envsubst > ${this.rootPath}/log.yaml`,
+      fs.writeFileSync(
+        path.join(this.rootPath as string, "log.yaml"),
+        yaml.dump(logConfig),
+        "utf8",
       );
     }
   }
   async generateConfig() {
     if (!fs.existsSync(this.configPath)) {
-      await this.exec(
-        `cat ${this.templatesPath}/develop.toml.template | envsubst > ${this.configPath}`,
-      );
+      fs.writeFileSync(this.configPath, stringify(develop as any));
+      this.config = develop;
+    } else {
+      this.config = parse(fs.readFileSync(this.configPath, "utf-8"));
     }
-    this.config = parse(fs.readFileSync(this.configPath, "utf-8"));
   }
   checkVars() {
     if (!this.rootPath || !this.configPath) {
@@ -210,6 +227,7 @@ export class NodeTask extends SetupTask {
   }
 
   async start() {
+    await this.setup();
     const pid = await this.getPid();
     if (pid) {
       console.log(`Node is already running (PID: ${pid}), not starting again.`);
@@ -303,8 +321,8 @@ export class ClientTask extends NodeTask {
   }
 
   async run(options: any) {
+    this.setup();
     try {
-      await this.setup();
       this.coreClient = this.getCoreClient();
       this.eSpaceClient = this.getESpaceClient();
       this.crossSpaceCall = this.coreClient.InternalContract("CrossSpaceCall");
@@ -367,8 +385,13 @@ export class ClientTask extends NodeTask {
     // Returns a Promise that resolves after "ms" Milliseconds
     const timer = (ms: number | undefined) =>
       new Promise((res) => setTimeout(res, ms));
-    const stderr = this.stderr;
-    const coreClient = this.coreClient;
+    let coreClient: Conflux;
+    if (this.coreClient) {
+      coreClient = this.coreClient;
+    } else {
+      this.setup();
+      coreClient = this.getCoreClient();
+    }
     async function checkStatus() {
       for (var i = 1; i <= 5; i++) {
         try {

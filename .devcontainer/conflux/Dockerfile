@@ -12,7 +12,6 @@ FROM ${BASE_IMAGE} AS devkit
 ARG CONFLUX_NODE_ROOT="/opt/conflux"
 ARG CONFIG_PATH="${CONFLUX_NODE_ROOT}/develop.toml"
 ARG SECRETS_PATH="${CONFLUX_NODE_ROOT}/genesis_secrets.txt"
-ENV TEMPLATES_PATH="/opt/tempaltes"
 
 # Install necessary dependencies and clean up apt lists to reduce image size
 RUN apt-get update && apt-get install -y --no-install-recommends \ 
@@ -30,7 +29,7 @@ COPY --from=release /bin/cfx-gen-dot /bin/cfx-gen-dot
 COPY --from=release /bin/cfxstore /bin/cfxstore
 
 # Create necessary directories for Conflux node operation
-RUN mkdir -p ${CONFLUX_NODE_ROOT} ${TEMPLATES_PATH}
+RUN mkdir -p ${CONFLUX_NODE_ROOT}
 
 # Set environment variables for chain IDs and configuration paths
 ENV CHAIN_ID=2029
@@ -40,14 +39,14 @@ ENV CONFIG_PATH=${CONFIG_PATH}
 ENV SECRETS_PATH=${SECRETS_PATH}
 ENV DEVKIT_PATH="/opt/devkit"
 
-# Add utility scripts and templates to the image
-ADD devkit ${DEVKIT_PATH}
-ADD templates ${TEMPLATES_PATH}
 
 # Define build arguments for user creation
 ARG USERNAME=node
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
+
+# Add utility scripts and templates to the image
+COPY devkit ${DEVKIT_PATH}
 
 # Create a new user if $USERNAME doesn't exist
 RUN id -u $USERNAME >/dev/null 2>&1 || (groupadd --gid $USER_GID $USERNAME \
@@ -58,8 +57,8 @@ RUN echo "$USERNAME ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
 # Change ownership of the Conflux node directory to the created user
-RUN chown -R ${USER_UID}:${USER_GID} ${CONFLUX_NODE_ROOT} \
-    && chown -R ${USER_UID}:${USER_GID} ${DEVKIT_PATH}
+RUN chown -R ${USERNAME}:${USERNAME} ${CONFLUX_NODE_ROOT} \
+    && chown -R ${USERNAME}:${USERNAME} ${DEVKIT_PATH}
 
 # Switch to the created user context
 USER $USERNAME  
@@ -70,10 +69,9 @@ WORKDIR /workspaces/
 # Configure npm and install devkit globally
 RUN mkdir -p ~/.local/bin \
     && npm config set prefix '~/.local/' \ 
-    && npm install -g npm@latest \
-    && (cd ${DEVKIT_PATH} && npm install && npm run build && npm install -g .)
-
-
+    && npm install -g npm@latest \ 
+    && (cd ${DEVKIT_PATH} && npm run local_install)
+    
 # Expose necessary ports for the Conflux node
 EXPOSE 3000 12535 12537 8545 8546
 

@@ -30,3 +30,5 @@ export class GenesisToeSpace extends ClientTask {
     }
   }
 }
+
+export const genesisToeSpace = new GenesisToeSpace();
