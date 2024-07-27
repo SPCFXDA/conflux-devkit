@@ -1,18 +1,16 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import {
-  GenesisList,
-  Faucet,
-  GenesisToeSpace,
-  Balance,
-  Status,
-  Start,
-  Stop,
-  Logs,
-  Stderr,
-} from "./index";
-const program = new Command();
 
+import {
+  ClientTask,
+  balance,
+  faucet,
+  genesisList,
+  genesisToeSpace,
+} from "./index";
+
+const program = new Command();
+const cfxNode = new ClientTask();
 program
   .version("0.1.0")
   .description("DevKit CLI utils")
@@ -38,31 +36,43 @@ async function main() {
 
   switch (activeOption) {
     case "start":
-      await new Start().run(options);
+      await cfxNode.start();
+      console.log("bootstrap...");
+      await cfxNode.status();
+      console.log("Node started!");
+      if (options.logs) {
+        await cfxNode.logs();
+      } else {
+        process.exit(0);
+      }
       break;
     case "stop":
-      await new Stop().run(options);
+      await cfxNode.stop();
       break;
     case "list":
-      await new GenesisList().run(options);
+      await genesisList.run(options);
       break;
     case "faucet":
-      await new Faucet().run(options);
+      await faucet.run(options);
       break;
     case "espaceGenesis":
-      await new GenesisToeSpace().run(options);
+      await genesisToeSpace.run(options);
       break;
     case "balance":
-      await new Balance().run(options);
+      await balance.run(options);
       break;
     case "status":
-      await new Status().run(options);
+      try {
+        console.log(await cfxNode.status());
+      } catch (error: any) {
+        console.log(error);
+      }
       break;
     case "logs":
-      await new Logs().run(options);
+      await cfxNode.logs();
       break;
     case "stderr":
-      await new Stderr().run(options);
+      await cfxNode.stderr();
       break;
     default:
       if (!process.argv.slice(2).length) {
@@ -73,6 +83,5 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("An error occurred during startup:", error.message);
   process.exit(1);
 });

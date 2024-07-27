@@ -1,5 +1,6 @@
-import { ClientTask } from "./task";
 import { privateKeyToAccount } from "viem/accounts";
+
+import { ClientTask } from "./task";
 
 export class GenesisList extends ClientTask {
   async execute(options: any) {
@@ -37,3 +38,5 @@ export class GenesisList extends ClientTask {
     });
   }
 }
+
+export const genesisList = new GenesisList();
