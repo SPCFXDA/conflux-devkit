@@ -1,9 +1,6 @@
 # Define build arguments for Node.js and Conflux release versions
 ARG BASE_IMAGE=node:20-slim
-
-# Stage 1: Use the official Conflux Rust image as the base for building release artifacts
-
-# Stage 2: Use the official Node.js slim image as the base for the development kit
+ARG DEVKIT_VERSION=node:20-slim
 FROM ${BASE_IMAGE} AS devkit
 
 # Define build arguments for Conflux node configuration

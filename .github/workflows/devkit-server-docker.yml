@@ -28,7 +28,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .devcontainer/conflux
+          context: .devcontainer
           target: openvscode
           push: true
           tags: spcfxda/conflux-devkit-server:latest
