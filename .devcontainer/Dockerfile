@@ -1,6 +1,6 @@
 # Define build arguments for Node.js and Conflux release versions
 ARG BASE_IMAGE=node:20-slim
-ENV DEVKIT_URL=https://github.com/SPCFXDA/devkit-cli/releases/download/v0.1.0/devkit-v0.1.0.tar.gz
+ARG DEVKIT_URL="https://github.com/SPCFXDA/devkit-cli/releases/download/v0.1.0/devkit-v0.1.0.tar.gz"
 FROM ${BASE_IMAGE} AS devkit
 
 # Define build arguments for Conflux node configuration
