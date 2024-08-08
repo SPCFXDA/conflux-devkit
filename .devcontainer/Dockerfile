@@ -1,6 +1,5 @@
 # Define build arguments for Node.js and Conflux release versions
 ARG BASE_IMAGE=node:20-slim
-ARG DEVKIT_URL="https://github.com/SPCFXDA/devkit-cli/releases/download/v0.1.0/devkit-v0.1.0.tar.gz"
 FROM ${BASE_IMAGE} AS devkit
 
 # Define build arguments for Conflux node configuration
@@ -40,7 +39,7 @@ RUN echo "$USERNAME ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME \
 # Change ownership of the Conflux node directory to the created user
 RUN chown -R ${USERNAME}:${USERNAME} ${CONFLUX_NODE_ROOT}
 
-RUN curl -sL ${DEVKIT_URL} | tar xz -C /
+RUN curl -sL "https://github.com/SPCFXDA/devkit-cli/releases/download/v0.1.0/devkit-v0.1.0.tar.gz" | tar xz -C /
 
 # Switch to the created user context
 USER $USERNAME  
