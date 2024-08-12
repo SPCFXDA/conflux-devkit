@@ -1,5 +1,6 @@
 # Define the base image for the build, specifying the Node.js version
-ARG BASE_IMAGE=node:20-slim
+ARG BASE_IMAGE=ubuntu:latest
+ARG DEVKIT_VERSION=v0.2.2
 FROM ${BASE_IMAGE} AS devkit
 
 # Define the directory path for Conflux node data
@@ -14,13 +15,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Create the Conflux node root directory
-RUN mkdir -p ${CONFLUX_NODE_ROOT}
+RUN mkdir -p ${CONFLUX_NODE_ROOT} /workspaces
 
 # Set environment variable for the Conflux node root directory path
 ENV CONFLUX_NODE_ROOT=${CONFLUX_NODE_ROOT}
 
 # Define arguments for creating a new user with a specified UID and GID
-ARG USERNAME=node
+ARG USERNAME=ubuntu
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
@@ -33,10 +34,15 @@ RUN echo "$USERNAME ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
 # Change ownership of the Conflux node directory to the created user
-RUN chown -R ${USERNAME}:${USERNAME} ${CONFLUX_NODE_ROOT}
+RUN chown -R ${USERNAME}:${USERNAME} ${CONFLUX_NODE_ROOT} /workspaces
 
 # Download and extract the devkit CLI tool from the specified release
-RUN curl -sL "https://github.com/SPCFXDA/devkit-cli/releases/download/v0.1.0/devkit-v0.1.0.tar.gz" | tar xz -C /
+COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/devkit /bin/devkit
+COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/conflux /bin/conflux
+COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/cfxkey /bin/cfxkey
+COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/pos-genesis-tool /bin/pos-genesis-tool
+COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/cfx-gen-dot /bin/cfx-gen-dot
+COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/cfxstore /bin/cfxstore
 
 # Switch to the newly created user context
 USER $USERNAME  
