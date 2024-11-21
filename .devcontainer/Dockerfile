@@ -1,6 +1,7 @@
 # Define the base image for the build, specifying the Node.js version
 ARG BASE_IMAGE=ubuntu:latest
 ARG DEVKIT_VERSION=v0.4.1
+FROM spcfxda/devkit-cli:${DEVKIT_VERSION} AS devkit-cli
 FROM ${BASE_IMAGE} AS devkit
 
 # Define the directory path for Conflux node data
@@ -37,12 +38,12 @@ RUN echo "$USERNAME ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME \
 RUN chown -R ${USERNAME}:${USERNAME} ${CONFLUX_NODE_ROOT} /workspaces
 
 # Download and extract the devkit CLI tool from the specified release
-COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/devkit /bin/devkit
-COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/conflux /bin/conflux
-COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/cfxkey /bin/cfxkey
-COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/pos-genesis-tool /bin/pos-genesis-tool
-COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/cfx-gen-dot /bin/cfx-gen-dot
-COPY --from=spcfxda/devkit-cli:v0.2.2 /bin/cfxstore /bin/cfxstore
+COPY --from=devkit-cli /bin/devkit /bin/devkit
+COPY --from=devkit-cli /bin/conflux /bin/conflux
+COPY --from=devkit-cli /bin/cfxkey /bin/cfxkey
+COPY --from=devkit-cli /bin/pos-genesis-tool /bin/pos-genesis-tool
+COPY --from=devkit-cli /bin/cfx-gen-dot /bin/cfx-gen-dot
+COPY --from=devkit-cli /bin/cfxstore /bin/cfxstore
 
 # Switch to the newly created user context
 USER $USERNAME  
