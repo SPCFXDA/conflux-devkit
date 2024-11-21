@@ -48,6 +48,12 @@ COPY --from=devkit-cli /bin/cfxstore /bin/cfxstore
 # Switch to the newly created user context
 USER $USERNAME  
 
+RUN printf '%s\n' \
+'{' \
+'  "type": "plaintext",' \
+'  "keystore": "test test test test test test test test test test test junk" '\
+'}' >> /home/${USERNAME}/.devkit.keystore.json
+
 # Set the working directory for the user
 WORKDIR /workspaces/
 
