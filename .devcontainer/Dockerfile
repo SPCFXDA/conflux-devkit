@@ -1,6 +1,6 @@
 # Define the base image for the build, specifying the Node.js version
 ARG BASE_IMAGE=ubuntu:latest
-ARG DEVKIT_VERSION=v0.2.2
+ARG DEVKIT_VERSION=v0.4.1
 FROM ${BASE_IMAGE} AS devkit
 
 # Define the directory path for Conflux node data
